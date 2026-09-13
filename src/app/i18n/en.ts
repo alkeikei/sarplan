@@ -1,0 +1,483 @@
+/**
+ * The English UI dictionary, and the source of truth for the key set.
+ *
+ * Keys are namespaced by where they appear: app.*, nav.*, field.*, section.*,
+ * note.*, action.*, opt.* for enumerated choices, and source.* for the
+ * "auto-filled from" provenance labels that selectors build.
+ *
+ * Anything quoting the reference tables keeps its table reference verbatim
+ * (Table D-6:1 and so on): those are citations, not prose.
+ */
+
+export const en = {
+  // --- shell -------------------------------------------------------------
+  'app.tagline': 'Optimal search planning · IAMSAR ISPM',
+  'app.language': 'Language',
+  'app.saving': 'Saving…',
+  'app.savedAt': 'Saved {time}',
+  'app.calculatedIn': 'Calculated {time} in {ms} ms',
+  'app.notCalculated': 'Not calculated',
+  'app.changesPending': '{count} change not calculated',
+  'app.changesPending.plural': '{count} changes not calculated',
+  'app.changedFields': 'Changed: {fields}',
+  'app.recalculate': 'Recalculate',
+  'app.cases': 'Cases…',
+  'app.newCase': 'New case',
+  'app.hidePanel': '◀ Hide',
+  'app.hidePanelTitle': 'Hide the panel and give the map the full window',
+  'app.showPanel': '▶ Show panel',
+  'app.restoring': 'Restoring the last case…',
+  'app.back': '← Back',
+  'app.next': 'Next: {step} →',
+  'app.developedBy': 'Developed by',
+  'app.planningAidShort':
+    'Planning aid only, not an authoritative determination. Every automated value is editable.',
+  'app.planningAid':
+    'Planning aid only. These outputs support the search coordinator’s judgement; they are not an authoritative determination of where the search object is. Every automated value in this report was editable and may have been overridden.',
+
+  // --- steps -------------------------------------------------------------
+  'nav.case': 'Case',
+  'nav.case.title': 'New case',
+  'nav.start': 'Start point',
+  'nav.start.title': 'Drifting start point',
+  'nav.environment': 'Environment',
+  'nav.environment.title': 'Environment and errors',
+  'nav.datum': 'Datum',
+  'nav.datum.title': 'Datum result',
+  'nav.assets': 'Facilities',
+  'nav.assets.title': 'Search facilities',
+  'nav.area': 'Search area',
+  'nav.area.title': 'Search area result',
+  'nav.export': 'Export',
+  'nav.export.title': 'Export the search plan',
+
+  // --- shared primitives -------------------------------------------------
+  'ui.autoFilledFrom': 'Auto-filled from {source}',
+  'ui.manualOverride': 'Manual override',
+  'ui.resetToAuto': 'Reset to auto',
+  'ui.resetToAutoValue': 'Reset to auto ({value})',
+  'ui.stale': 'Stale',
+  'ui.helpAria': 'What is {title}?',
+  'ui.helpWhatToDo': 'What to do:',
+  'ui.helpSource': 'Source: {source}',
+  'ui.helpDismiss': 'Click the ? again, or press Esc, to close.',
+
+  // --- stale notice ------------------------------------------------------
+  'stale.title': 'These results are stale',
+  'stale.titleNever': 'Not calculated yet',
+  'stale.body':
+    'Inputs have changed since the last run. Nothing recalculates on its own, so you can see what moved first.',
+  'stale.bodyNever':
+    'Run the calculation to produce a datum and a search area.',
+  'stale.failed': 'The calculation could not run',
+
+  // --- case step ---------------------------------------------------------
+  'section.case': 'Case',
+  'section.case.sub':
+    'Name this case and say what kind of distress position you have.',
+  'case.defaultName': 'Untitled case',
+  'case.newNamed': 'Case {stamp}',
+  'field.caseName': 'Case name',
+  'field.distressType': 'Distress type',
+  'field.distressType.hint':
+    'Drives which position you place next and how the start point error X is taken.',
+  'note.previousDatum':
+    'Continuing from a previous datum: set X to that search’s total probable error E, by overriding the drifting start point error on the Environment step.',
+  'section.searchObject': 'Search object',
+  'section.searchObject.sub':
+    'Sets the leeway coefficients. Every coefficient stays editable.',
+  'field.objectType': 'Object type',
+  'field.leewayMultiplier': 'Multiplier',
+  'field.leewayModifier': 'Modifier',
+  'field.leewayDivergence': 'Divergence',
+  'field.applyDivergence': 'Apply leeway divergence (two datums)',
+  'note.leewayFormula':
+    'Leeway speed = (multiplier × wind speed) ± modifier. Switching divergence off forces DD = 0 and a single point datum.',
+
+  // --- start point step --------------------------------------------------
+  'section.startPoint': 'Drifting start point',
+  'action.dropPin': 'Drop a pin',
+  'action.clickMap': 'Click the map…',
+  'action.moveEndPoint': 'Move end point',
+  'field.latitude': 'Latitude',
+  'field.longitude': 'Longitude',
+  'field.endLatitude': 'End latitude',
+  'field.endLongitude': 'End longitude',
+  'unit.degTrue': 'deg true',
+  'unit.hours': 'hours',
+  'unit.deg': 'deg',
+  'unit.degNorth': 'deg, + north',
+  'unit.degEast': 'deg, + east',
+  'note.pinOrType':
+    'Drag the pin on the map or type the position here. Neither blocks the other.',
+  'section.driftTime': 'Drift time',
+  'section.driftTime.sub':
+    'Distress time to search start time. Drives De = Dve × drift time.',
+  'field.distressTime': 'Distress time',
+  'field.searchStartTime': 'Search start time',
+  'field.driftTime': 'Drift time',
+  'section.lineDatum': 'Line datum (optional)',
+  'section.lineDatum.sub':
+    'Place a second point to search a track line rather than a point.',
+  'action.removeLineEnd': 'Remove line end point',
+  'action.addLineEnd': 'Add a line end point',
+  'note.lineDatum':
+    'Set the datum type to “Line datum” on the Datum step to use it. The whole line drifts with the datum, and DD becomes the drifted line length.',
+
+  // --- environment step --------------------------------------------------
+  'section.wind': 'Wind',
+  'section.wind.sub':
+    'The only live source in this build. Every field stays editable.',
+  'action.fetchWind': 'Fetch from Open-Meteo',
+  'action.fetching': 'Fetching…',
+  'field.windSpeed': 'Wind speed',
+  'field.windFrom': 'Wind from',
+  'field.windSteadiness': 'Wind steadiness',
+  'field.windSteadiness.hint':
+    'Sets ASWDve, the drift velocity error contributed by the surface wind.',
+  'source.windFetched': '{source}, fetched {time}',
+  'section.seaState': 'Sea state and visibility',
+  'section.seaState.sub':
+    'Visibility drives the sweep width lookup; sea height can drive fw. Sea height is manual entry.',
+  'field.visibility': 'Meteorological visibility',
+  'field.seaHeight': 'Significant sea height',
+  'field.seaHeight.off': 'Not in use: fw comes from the wind band alone.',
+  'field.seaHeight.on': 'The worse of the wind band and the sea band sets fw.',
+  'field.useSeaHeight': 'Use sea height in the weather correction factor',
+  'section.currents': 'Water currents',
+  'section.currents.sub':
+    'Manual entry in this build: no live ocean current source is wired up. Set direction is the direction the current sets toward.',
+  'current.tidal': 'Tidal current',
+  'current.sea': 'Sea current',
+  'current.wind': 'Wind current',
+  'current.other': 'Other water current',
+  'field.currentSpeed': 'Speed',
+  'field.currentSet': 'Sets toward',
+  'field.currentError': 'Probable error',
+  'section.leewayError': 'Leeway error',
+  'section.leewayError.sub': 'LWe feeds Dve = sqrt(ASWDve² + TWCe² + LWe²).',
+  'field.lwe': 'LWe',
+  'section.positionError': 'Position error',
+  'section.positionError.sub':
+    'X for the drifting start point, Y for the search facility. Both feed E.',
+  'field.xSource': 'X source: how the start point was fixed',
+  'field.x': 'X, drifting start point error',
+  'field.ySource': 'Y source: how the search facility fixes its position',
+  'field.y': 'Y, search facility position error',
+
+  // --- datum step --------------------------------------------------------
+  'section.datum': 'Datum',
+  'section.datum.sub': 'Where the search object is most likely to be now.',
+  'metric.datumPosition': 'Datum position',
+  'metric.datumLeft': 'Datum, left of downwind',
+  'metric.datumRight': 'Datum, right of downwind',
+  'metric.drift': 'Drift',
+  'metric.drift.sub': 'Toward {bearing} at {speed} kt',
+  'metric.leeway': 'Leeway',
+  'metric.leeway.sub': 'Downwind {bearing}, divergence ±{angle}°',
+  'section.probableError': 'Probable error',
+  'metric.datumType': 'Datum type',
+  'metric.e': 'E, total probable error',
+  'metric.de': 'De, drift error',
+  'metric.dve': 'Dve, drift velocity error',
+  'metric.twce': 'TWCe, water current error',
+  'metric.x': 'X, start point error',
+  'metric.y': 'Y, facility error',
+  'section.datumType': 'Datum type',
+  'section.datumType.sub':
+    'SR = DD / E. Below 4 the two divergence datums share one area; at 4 and above they are searched independently.',
+  'metric.dd': 'DD, divergence distance',
+  'metric.sr': 'SR, separation ratio',
+  'metric.sr.above': 'At or above 4',
+  'metric.sr.below': 'Below 4',
+  'field.datumType': 'Datum type',
+  'field.datumType.hint':
+    'Auto-selected from SR. Override it if local knowledge says otherwise.',
+  'opt.datumTypeAuto': 'Auto ({type})',
+  'source.separationRatio': 'separation ratio {value}',
+  'note.lineDatumNoEnd':
+    'A line datum with no line end point placed uses DD = 0, so L = 2E. Place the end point on the Start point step to search a real track line.',
+
+  // --- facilities step ---------------------------------------------------
+  'section.facilities': 'Search facilities',
+  'section.facilities.sub':
+    'Each facility contributes Z = W × V × T to the total available effort Zta.',
+  'action.addFacility': 'Add facility',
+  'action.remove': 'Remove',
+  'note.noFacilities':
+    'No facilities assigned yet. The datum and probable error still calculate; the search area needs at least one facility to produce a coverage factor and track spacing.',
+  'field.facilityName': 'Name',
+  'facility.fallbackName': 'Facility {n}',
+  'field.sweepTable': 'Sensor platform and altitude / eye height',
+  'field.sweepObject': 'Search object, as the sweep width table names it',
+  'field.w0': 'W0, uncorrected sweep width',
+  'field.w0.hint': 'Read at {km} km visibility, set on the Environment step.',
+  'field.weatherObjectClass': 'Weather correction applies to',
+  'field.fw': 'fw, weather',
+  'field.fv': 'fv, speed',
+  'field.ff': 'ff, fatigue',
+  'field.crewFatigued': 'Crew fatigue is a factor',
+  'field.assetSpeed': 'V, search speed',
+  'field.assetEndurance': 'T, search endurance',
+  'source.noFvTable': 'no source table; defaults to 1.0',
+
+  // --- search area step --------------------------------------------------
+  'section.searchFactor': 'Search factor',
+  'section.searchFactor.sub': 'fs steps up as the search expands. Ro = fs × E.',
+  'field.searchStage': 'Search stage',
+  'field.fs': 'fs, optimal search factor',
+  'section.searchArea': 'Search area',
+  'metric.ro': 'Ro, optimal radius',
+  'metric.ao': 'Ao, optimal area',
+  'metric.co': 'Co, coverage factor',
+  'metric.co.below': 'Below 1: tracks are wider than the sweep width',
+  'metric.co.unsatisfactory': 'Below 0.5: the manual does not recommend searching at this coverage',
+  'note.coverageTooLow':
+    'The source manual states that a coverage factor below 0.5 is unsatisfactory in itself and that searching an area at less than 0.5 is not recommended. Add search effort, or reduce the area, before committing to this plan.',
+  'field.pod.reference': 'The manual prints two points: {points}.',
+  'metric.zta': 'Zta, total effort',
+  'section.effort': 'Effort',
+  'section.effort.sub': 'fz, relative effort and cumulative relative effort.',
+  'metric.fz': 'fz, effort factor',
+  'metric.zr': 'Zr, relative effort',
+  'metric.zrc': 'Zrc, cumulative',
+  'metric.searchCondition': 'Search condition',
+  'metric.searchCondition.sub': 'fw, fv, ff all ≥ 1 is ideal',
+  'opt.conditionIdeal': 'Ideal',
+  'opt.conditionNormal': 'Normal',
+  'section.trackSpacing': 'Track spacing',
+  'section.trackSpacing.sub':
+    'So = W / Co, per facility, from that facility’s own corrected sweep width.',
+  'note.needFacility':
+    'Add a search facility to get a coverage factor and track spacing.',
+  'asset.summary': 'W {w} nm · Z {z} nm² · {share} of Zta',
+  'asset.summaryLegs': '{legs} legs at {spacing} nm, {total} nm of track',
+  'section.evaluation': 'Evaluation',
+  'section.evaluation.sub':
+    'POS = POC × POD. POD is manual: the detection curve is not digitised in the reference tables.',
+  'field.poc': 'POC, probability of containment',
+  'field.pod': 'POD, probability of detection',
+  'metric.pos': 'POS, probability of success',
+
+  // --- export step -------------------------------------------------------
+  'section.export': 'Export',
+  'section.export.sub':
+    'A search plan PDF with the inputs used, the full calculation chain, the facilities, and the map view.',
+  'action.exportPdf': 'Export PDF',
+  'action.generating': 'Generating…',
+  'note.calculateFirst': 'Run the calculation first.',
+  'note.exportStale':
+    'The report will use the inputs from the last calculation, not the edits made since. Recalculate first if you want the current inputs in it.',
+  'note.exportMapHint':
+    'The map is captured as it looks on screen right now, including the layer toggles. Pan, zoom and set the layers the way you want them in the report before exporting.',
+  'export.savedWithMap': 'Report saved, with the map view included.',
+  'export.savedWithoutMap':
+    'Report saved without the map view{reason}. The report is text only; every calculated position is listed in it.',
+  'export.failed': 'The report could not be generated.',
+  'section.reportPreview': 'Report preview',
+  'section.reportPreview.sub': 'Calculated {time} in {ms} ms',
+  'section.reportNote': 'Note carried in every report',
+
+  // --- map ---------------------------------------------------------------
+  'map.layers': 'Layers',
+  'map.driftTrack': 'Drift track',
+  'map.errorCircle': 'Error circle (E)',
+  'map.searchArea': 'Optimal search area',
+  'map.trackLines': 'Track spacing lines',
+  'map.datum': 'Datum',
+  'map.startPoint': 'Start point',
+  'map.fitToResults': 'Fit to results',
+  'map.tracksAll': 'Tracks: all facilities',
+  'map.tracksOne': 'Tracks: {name}',
+  'map.placeStart': 'Click the map to place the drifting start point',
+  'map.placeLineEnd': 'Click the map to place the line end point',
+  'map.startPointTip': 'Drifting start point',
+  'map.lineEndTip': 'Line datum end point',
+  'map.datumLeftTip': 'Datum (left of downwind)',
+  'map.datumRightTip': 'Datum (right of downwind)',
+  'map.driftTrackTip': '{label}: {distance} nm',
+  'map.rectTip': '{label}: {width} × {length} nm',
+  'map.circleTip': '{label}: {radius} nm',
+  'map.legsTip': '{name}: {legs} legs at {spacing} nm',
+  'map.legsTipStride':
+    '{name}: {legs} legs at {spacing} nm (every {stride}th drawn)',
+
+  // --- enumerated options ------------------------------------------------
+  'opt.distress.lkp': 'Last known position (LKP) known',
+  'opt.distress.eip': 'Estimated initial position (EIP) only',
+  'opt.distress.previousDatum': 'Continuing from a previous datum',
+  'opt.steadiness.steady': 'Steady or gradually changing wind (0.3 kt)',
+  'opt.steadiness.variable': 'Forecast or highly variable wind (0.5 kt)',
+  'opt.datumType.singlePoint': 'Single point datum',
+  'opt.datumType.leewayDivergence': 'Leeway divergence datum',
+  'opt.datumType.widelyDiverging': 'Widely diverging datums',
+  'opt.datumType.line': 'Line datum',
+  'opt.weatherClass.small': 'Person in water, life raft, or boat <10 m',
+  'opt.weatherClass.other': 'Other search objects',
+  'opt.stage.initial': 'Initial probability area',
+  'opt.stage.firstExpansion': 'First expansion',
+  'opt.stage.secondExpansion': 'Second expansion',
+  'opt.stage.thirdExpansion': 'Third expansion',
+  'opt.stage.finalExpansion': 'Final expansion',
+  'opt.stageWithFs': '{label} (fs {fs})',
+  'group.navMeans': 'Means of navigation (Table D-6:1)',
+  'group.navUnknown': 'Navigation unknown, by craft (Table D-6:2)',
+  'platform.vesselWater': 'Vessel, visual over water',
+  'platform.merchantShip': 'Merchant ship',
+  'platform.fixedWing': 'Fixed-wing aircraft',
+  'platform.helicopter': 'Helicopter',
+  'platform.land': 'Over land',
+
+  // --- provenance labels built by the selectors --------------------------
+  'source.distressToStart': 'Distress time to search start time',
+  'source.leewayTable': 'Leeway table D-5:1/2',
+  'source.lweTable': 'Allen & Plourde 1999, Table 8-1 row {ref}',
+  'source.lweDefault': 'the 0.3 kt default — Table 8-1 has no row for this object',
+  'source.lweFloor':
+    'The source prints Sy/x as a floor (> {syx} cm/s) rather than a measurement, so this LWe is a minimum, not a precise figure.',
+  'field.lwe.caption': 'Per craft type from {source}. Public domain.',
+  'source.safetyTable': 'Safety factor Table 3-2',
+  'source.manualEntry': 'Manual entry',
+  'source.currentDefault': 'a 0.3 kt default, used where there is no better estimate',
+  'source.fixError': '{label}, {table}',
+  'source.fixErrorRule':
+    '{label}: the source gives a rule, not a fixed value - {rule}. Enter the worked figure.',
+  'source.weatherClassFromCase': 'the search object, set on the Case step',
+  'source.fixEvaluateUpward':
+    'The source marks this figure to be evaluated upward according to circumstances, and states that every fix error in Tables D-6:1 to D-6:3 is a minimum.',
+  'source.fvTable': 'Table D-5:8, {row}',
+  'source.fvNoRow':
+    'the default 1.0 — Table D-5:8 covers aircraft searching for maritime objects only',
+  'source.fvInterpolated':
+    'Interpolated between the search speeds Table D-5:8 prints, for {speed} kt.',
+  'source.sweepWidthTable': 'Sweep width table',
+  'source.sweepWidthFrom': '{table}, {platform}',
+  'source.noTableRow': 'No matching table row - enter W0 manually',
+  'source.interpolated':
+    'Interpolated between the {km} km neighbours in the table.',
+  'source.weatherBand': 'Table D-5:4, {band}, by {drivenBy}',
+  'source.fatigueTired': 'fatigue table: crew fatigued',
+  'source.fatigueRested': 'fatigue table: rested',
+  'drivenBy.wind': 'wind',
+  'drivenBy.sea': 'sea',
+
+  // --- BMKG visibility ---------------------------------------------------
+  'bmkg.badTime': 'The requested time is not valid.',
+  'bmkg.unreachable':
+    'Could not reach BMKG. Enter the visibility manually; manual entry is a full path, not a fallback.',
+  'bmkg.httpStatus': 'BMKG returned {status}. Enter the visibility manually.',
+  'bmkg.noPorts': 'BMKG returned no port list, so the nearest port could not be found.',
+  'bmkg.noVisibility': 'BMKG has no visibility figure for {port} right now.',
+  'bmkg.farPort':
+    'Nearest BMKG port is {port}, {distance} nm from the drifting start point. Port visibility may not be the visibility on scene.',
+  'bmkg.outsidePeriod':
+    'No BMKG period covers the search start time; using {from} to {to}.',
+  'bmkg.failed': 'Visibility fetch failed. Enter the visibility manually.',
+  'action.fetchVisibility': 'Fetch from BMKG',
+  'source.bmkgVisibility': 'BMKG {port}, {distance} nm away',
+  // --- wind service ------------------------------------------------------
+  'wind.badTime': 'The requested time is not valid.',
+  'wind.unreachable':
+    'Could not reach Open-Meteo. Enter the wind manually; manual entry is a full path, not a fallback.',
+  'wind.httpStatus':
+    'Open-Meteo returned {status}. The requested date may be outside its forecast range. Enter the wind manually.',
+  'wind.noData': 'Open-Meteo returned no wind data for this position.',
+  'wind.noHours': 'Open-Meteo returned no usable wind hours for that day.',
+  'wind.nearestHour':
+    'Nearest available forecast is {gap} h from the requested time ({time} UTC).',
+  'wind.failed': 'Wind fetch failed. Enter the wind manually.',
+
+  // --- map capture -------------------------------------------------------
+  'capture.notReady': 'The map is not ready to capture.',
+  'capture.noContext': 'Could not get a drawing context for the map capture.',
+
+  // --- report ------------------------------------------------------------
+  'report.subtitle': 'SARPlan search plan  ·  calculated {calc}  ·  report generated {gen}',
+  'report.untitled': 'Untitled case',
+  'report.fileCase': 'case',
+  'report.h.summary': 'Result summary',
+  'report.h.positions': 'Positions',
+  'report.h.map': 'Map',
+  'report.h.inputs': 'Inputs used',
+  'report.h.currents': 'Water currents (manual entry: no live current source in this build)',
+  'report.h.chain': 'Calculation chain',
+  'report.h.facilities': 'Search facilities and track spacing',
+  'report.h.sources': 'Sources',
+  'report.lbl.datumType': 'Datum type',
+  'report.lbl.e': 'E, total probable error',
+  'report.lbl.ro': 'Ro, optimal search radius',
+  'report.lbl.ao': 'Ao, optimal search area',
+  'report.lbl.co': 'Co, optimal coverage factor',
+  'report.lbl.zta': 'Zta, total available effort',
+  'report.lbl.sr': 'SR, separation ratio',
+  'report.lbl.pos': 'POS, probability of success',
+  'report.lbl.startPoint': 'Drifting start point',
+  'report.lbl.distressType': 'Distress type',
+  'report.lbl.datum': 'Datum',
+  'report.lbl.datumLeft': 'Datum, left of downwind',
+  'report.lbl.datumRight': 'Datum, right of downwind',
+  'report.lbl.lineEnd': 'Line datum end point',
+  'report.lbl.driftDistance': 'Drift distance from start point',
+  'report.lbl.dd': 'DD, divergence distance',
+  'report.lbl.weatherClass': 'Weather correction applies to',
+  'report.lbl.searchObject': 'Search object',
+  'report.lbl.leewayMultiplier': 'Leeway multiplier',
+  'report.lbl.leewayModifier': 'Leeway modifier',
+  'report.lbl.leewayDivergence': 'Leeway divergence angle',
+  'report.lbl.distressTime': 'Distress time',
+  'report.lbl.searchStartTime': 'Search start time',
+  'report.lbl.driftTime': 'Drift time',
+  'report.lbl.wind': 'Wind',
+  'report.lbl.windSource': 'Wind source',
+  'report.lbl.windSteadiness': 'Wind steadiness',
+  'report.lbl.visibility': 'Visibility',
+  'report.lbl.seaHeight': 'Sea height',
+  'report.lbl.x': 'X, start point error',
+  'report.lbl.y': 'Y, facility position error',
+  'report.lbl.lwe': 'LWe, leeway error',
+  'report.lbl.fs': 'fs, optimal search factor',
+  'report.windValue': '{speed} kt from {bearing}',
+  'report.val.manual': '(manual)',
+  'report.val.manualShort': 'manual',
+  'report.val.notApplied': '(not applied)',
+  'report.val.manualEntry': 'Manual entry',
+  'report.val.notUsed': 'Not used',
+  'report.val.manualOverride': 'manual override',
+  'report.val.fromSr': 'from SR',
+  'report.windFlag': 'Wind data flag: {reason}',
+  'report.mapUnavailable':
+    'The map view could not be captured for this report ({reason}). Every calculated position is listed above.',
+  'report.legend.searchArea': 'Search area',
+  'report.legend.errorCircle': 'Error circle E',
+  'report.legend.datum': 'Datum',
+  'report.legend.driftTrack': 'Drift track / start point',
+  'report.tbl.component': 'Component',
+  'report.tbl.speedKt': 'Speed (kt)',
+  'report.tbl.setsToward': 'Sets toward',
+  'report.tbl.errorKt': 'Probable error (kt)',
+  'report.cur.tidal': 'Tidal',
+  'report.cur.sea': 'Sea',
+  'report.cur.wind': 'Wind',
+  'report.cur.other': 'Other',
+  'report.tbl.step': 'Step',
+  'report.tbl.formula': 'Formula',
+  'report.tbl.value': 'Value',
+  'report.tbl.facility': 'Facility',
+  'report.step.leewaySpeed': 'Leeway speed',
+  'report.step.twc': 'Total water current',
+  'report.step.driftVector': 'Drift vector',
+  'report.formula.leeway': '(multiplier × wind) ± modifier',
+  'report.formula.vectorSum': 'vector sum of 4 components',
+  'report.formula.driftSum': 'leeway + total water current',
+  'report.formula.sumZ': 'sum of (W × V × T)',
+  'report.formula.sumZr': 'sum of Zr',
+  'report.formula.driftTime': 'Dve × drift time',
+  'report.ktToward': '{speed} kt toward {bearing}',
+  'report.noFacilities': 'No search facilities were assigned to this search.',
+  'report.facilityKey':
+    'W0 uncorrected sweep width (nm) · fw weather · fv speed · ff fatigue · W corrected sweep width (nm) · V search speed (kt) · T endurance (h) · Z search effort (nm²) · So optimal track spacing (nm).',
+  'report.sources':
+    'Leeway, sweep width, correction factor, position error and safety factor values are taken from the National Search and Rescue Manual, 2023 Edition (AMSA / Australian National Search and Rescue Council), Appendices D-5 to D-7 and Table 3-2, used as a publicly citable stand-in for IAMSAR Volume II Appendix N. The weather correction factor for search objects other than a person in water, life raft or boat under 10 m, and the fix-error-by-navigation table, are that manual’s own values and differ from IAMSAR. LWe comes from Allen, A.A. and Plourde, J.V. (1999), Review of Leeway: Field Experiments and Implementation, U.S. Coast Guard R&D Center CG-D-08-99, Table 8-1, a U.S. federal government work in the public domain: it is the standard error of the measured leeway regression for the craft type, and a craft with no row there falls back to 0.3 kt. fv comes from Table D-5:8, the speed correction factors for aircraft search facilities, read from each facility’s platform and search speed; a vessel, or an aircraft over land, has no row there and takes 1.0. The probability of detection curve is not digitised, so POD is a manual entry.',
+} as const;
+
+export type TextKey = keyof typeof en;
