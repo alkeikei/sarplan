@@ -1,111 +1,152 @@
 /**
  * The base map layer.
  *
- * MapTiler rather than tile.openstreetmap.org: that server is volunteer-run,
- * donation-funded infrastructure whose usage policy excludes production apps,
- * so it may throttle or block without warning. A basemap that disappears
- * mid-search is not a failure this tool should be capable of having. The data
- * underneath is still OpenStreetMap — only the server changes.
+ * Protomaps vector tiles, read from a single `.pmtiles` archive this project
+ * hosts itself in Cloudflare R2 and serves through its own Worker. The data
+ * underneath is still OpenStreetMap; only the server changes.
  *
- * Two safety nets, because a blank map is worse than an imperfect one:
+ * Why not a public tile server. `tile.openstreetmap.org` is volunteer-run
+ * infrastructure whose usage policy excludes production apps, so it may
+ * throttle or block without warning. Keyed commercial tiles (MapTiler and
+ * friends) trade that for a monthly quota and an API key, which an
+ * open-source tool everyone can access cannot honestly promise to stay
+ * inside. A basemap that disappears mid-search is not a failure this tool
+ * should be capable of having.
  *
- *   - with no key configured the layer starts on OSM, so `npm run dev` works
- *     for anyone who clones this. Development is the small-scale use OSM's
- *     policy does allow; production builds set the key.
- *   - if MapTiler tiles fail repeatedly — quota exhausted, outage, a style
- *     name that does not exist on the account's plan — the layer falls back
- *     to OSM rather than leaving the coordinator with empty grey squares.
+ * Self-hosting removes the failure mode rather than adding a fallback for it.
+ * The archive is served from the same origin as the app, by the same Worker,
+ * so the map now has exactly the availability the app itself has: if the
+ * tiles are unreachable, the page that would have drawn them did not load
+ * either. There is no third party left to fall back from.
+ *
+ * Rendering is protomaps-leaflet, which draws vector tiles to a 2D canvas
+ * inside Leaflet's own grid. Deliberately not MapLibre GL: this keeps one map
+ * engine rather than two, needs no WebGL — operations rooms run whatever
+ * hardware they run — and leaves the PDF capture in `mapCapture.ts` working,
+ * because a 2D canvas keeps its contents for html2canvas to read.
  */
 
 import L from 'leaflet';
-
-const KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
+// Pinned to the major protomaps-leaflet itself depends on. If they diverge,
+// npm nests a second copy and the two PMTiles types stop being the same type,
+// which fails the build rather than shipping two readers and two caches.
+import { PMTiles } from 'pmtiles';
+import { labelRules, leafletLayer, paintRules } from 'protomaps-leaflet';
+import { namedFlavor, type Flavor } from '@protomaps/basemaps';
+import type { Lang } from '../app/i18n';
 
 /**
- * `ocean` carries bathymetry and shipping detail, which is what a maritime
- * search is read against. Overridable because style availability depends on
- * the MapTiler plan, and the fallback below cannot tell a bad style name from
- * an outage.
+ * Same-origin by default: `/tiles/basemap.pmtiles` is the Worker route backed
+ * by R2. Overridable so a deployment can point at its own bucket, and so
+ * `npm run dev` can be aimed at a deployed instance instead of a local
+ * archive.
  */
-const STYLE = (import.meta.env.VITE_MAPTILER_STYLE as string | undefined) ?? 'ocean';
+const PMTILES_URL =
+  (import.meta.env.VITE_PMTILES_URL as string | undefined) ?? '/tiles/basemap.pmtiles';
 
-/** Tile errors arrive per tile, so a whole failed screen is one incident. */
-const FALLBACK_AFTER_ERRORS = 8;
-
-const OSM_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-/** MapTiler's terms require the attribution link, not just the name. */
-const MAPTILER_ATTRIBUTION =
-  '<a href="https://www.maptiler.com/copyright/">&copy; MapTiler</a> ' + OSM_ATTRIBUTION;
+/** Protomaps planet builds carry data to z15; past that the tiles overzoom. */
+const MAX_DATA_ZOOM = 15;
 
 /**
- * `crossOrigin` is load-bearing: the PDF export rasterises the map through
- * html2canvas, which taints the canvas without it. Both servers send
- * Access-Control-Allow-Origin: *.
+ * Both attributions are required: Protomaps for the tile schema and build,
+ * OpenStreetMap for the data.
  */
-const common: L.TileLayerOptions = { maxZoom: 19, crossOrigin: 'anonymous' };
-
-type Coord = number | string;
-
-/** Takes Leaflet's `{z}/{x}/{y}` placeholders as readily as real numbers. */
-const tileUrl = (z: Coord, x: Coord, y: Coord, scale = ''): string =>
-  `https://api.maptiler.com/maps/${STYLE}/${z}/${x}/${y}${scale}.png?key=${KEY}`;
-
-const osmLayer = (): L.TileLayer =>
-  L.tileLayer(OSM_URL, { ...common, attribution: OSM_ATTRIBUTION });
-
-function maptilerLayer(): L.TileLayer {
-  // @2x is served as one tile, so the sharper asset costs no extra quota.
-  const scale = (globalThis.devicePixelRatio ?? 1) > 1 ? '@2x' : '';
-  return L.tileLayer(tileUrl('{z}', '{x}', '{y}', scale), {
-    ...common,
-    attribution: MAPTILER_ATTRIBUTION,
-  });
-}
+const ATTRIBUTION =
+  '<a href="https://protomaps.com">Protomaps</a> &copy; ' +
+  '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 /**
- * Is the key actually good?
+ * The dark flavour, with water and background pulled to the app's own ocean
+ * tone so the overlays — drawn in cyan and amber over open water — keep the
+ * contrast they were chosen for. Everything else is left as Protomaps ships
+ * it rather than restyled by eye.
+ */
+const flavor = (): Flavor => ({
+  ...namedFlavor('dark'),
+  background: '#0a2e44',
+  water: '#0a2e44',
+  earth: '#123449',
+});
+
+/**
+ * Protomaps carries OSM's `name:<lang>` tags, so labels follow the app's
+ * language where the data has a translation and fall back to the local name
+ * where it does not.
+ */
+const rulesFor = (lang: Lang): { paintRules: ReturnType<typeof paintRules>; labelRules: ReturnType<typeof labelRules> } => {
+  const f = flavor();
+  return { paintRules: paintRules(f), labelRules: labelRules(f, lang) };
+};
+
+export type BaseLayer = ReturnType<typeof leafletLayer> & L.GridLayer;
+
+/**
+ * The archive, owned here rather than left to the renderer to open from a URL.
  *
- * This cannot be left to Leaflet's `tileerror`. A rejected key — invalid,
- * domain-restricted, or over quota — comes back as 403 carrying a *valid* PNG
- * that says so, which an <img> loads perfectly happily: the event never fires
- * and the coordinator gets a map tiled with error messages. Only a fetch sees
- * the status code. One z0 tile, once per load, is a rounding error against the
- * monthly allowance.
+ * This is load-bearing, not tidiness. protomaps-leaflet cancels any request
+ * still in flight for a zoom level the map has since left, which is right for
+ * tile bodies and wrong for the archive header: the header and root directory
+ * are read once, lazily, on whichever tile happens to ask first, and every
+ * later read is served from that one cached result. This app changes zoom
+ * within a few hundred milliseconds of mounting — the store restores the last
+ * case and the map fits to its results — so that first read was being
+ * cancelled mid-flight, the failure cached, and every tile afterwards failed
+ * instantly against it. A map that came up blank, with no request left in the
+ * network panel to explain why, and that came up fine on a reload when the
+ * race fell the other way.
+ *
+ * Reading the header here, before the layer exists, takes it off that path:
+ * the fetch is started with no abort signal on it, and the reader's cache
+ * hands the same result to the tiles that follow.
  */
-async function keyRejected(): Promise<boolean> {
-  try {
-    const res = await fetch(tileUrl(0, 0, 0), { mode: 'cors' });
-    return !res.ok;
-  } catch {
-    // Offline or DNS failure. OSM would fare no better, so keep MapTiler and
-    // let the tiles resolve when the connection returns.
-    return false;
-  }
-}
+const archive = new PMTiles(PMTILES_URL);
+
+/**
+ * Opens the archive, and says so plainly if it cannot be opened.
+ *
+ * A missing bucket binding or an archive that was never uploaded otherwise
+ * shows up only as a map that stays the background colour, with nothing in
+ * the console to say why — and that is a deployment mistake the person who
+ * made it should be told about in words.
+ */
+const opened = archive.getHeader().catch((e: unknown) => {
+  console.error(
+    `[basemap] Could not read ${PMTILES_URL}: ${String(e)}\n` +
+      'The map will not draw. In development, run `npm run tiles` to cut an ' +
+      'archive, or set VITE_PMTILES_URL to a deployed one. In production, ' +
+      "check that the archive is in R2 and that the Worker's binding points at it.",
+  );
+});
 
 /** Adds the base layer to the map and returns it. */
-export function addBaseLayer(map: L.Map): L.TileLayer {
-  if (!KEY) return osmLayer().addTo(map);
+export function addBaseLayer(map: L.Map, lang: Lang): BaseLayer {
+  const layer = leafletLayer({
+    url: archive,
+    attribution: ATTRIBUTION,
+    maxDataZoom: MAX_DATA_ZOOM,
+    backgroundColor: '#0a2e44',
+    ...rulesFor(lang),
+  }) as BaseLayer;
 
-  const layer = maptilerLayer().addTo(map);
+  layer.addTo(map);
 
-  const fallBack = (why: string): void => {
-    if (!map.hasLayer(layer)) return;
-    console.warn(`[basemap] ${why}; falling back to OpenStreetMap.`);
-    osmLayer().addTo(map);
-    map.removeLayer(layer);
-  };
-
-  void keyRejected().then((bad) => bad && fallBack('MapTiler rejected the key'));
-
-  // Still worth watching: an outage mid-session fails as a real tile error.
-  let errors = 0;
-  layer.on('tileerror', () => {
-    if (++errors >= FALLBACK_AFTER_ERRORS) fallBack('MapTiler tiles failing');
-  });
+  // The first tiles are requested before the header resolves and come back
+  // empty; once it has, they need asking for again.
+  void opened.then(() => layer.rerenderTiles());
 
   return layer;
+}
+
+/**
+ * Re-labels the base map in the given language.
+ *
+ * Place names are part of the translation, not furniture around it: a
+ * coordinator reading the panels in Indonesian should not be reading the map
+ * underneath them in English. Only the label rules change — the paint rules
+ * have no text in them, so the geometry does not re-style.
+ */
+export function setBaseLayerLanguage(layer: BaseLayer, lang: Lang): void {
+  layer.labelRules = rulesFor(lang).labelRules;
+  layer.clearLayout();
+  layer.rerenderTiles();
 }

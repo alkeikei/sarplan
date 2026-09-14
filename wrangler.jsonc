@@ -1,12 +1,32 @@
 {
-  // Cloudflare Workers static-asset hosting. The app is a pure client-side
-  // SPA: there is no server code, so this Worker only serves ./dist.
+  // Cloudflare Workers hosting. The app itself is a pure client-side SPA; the
+  // Worker exists only to serve the Protomaps basemap archive out of R2 as
+  // byte ranges, because the archive is far past the 25 MB static-asset limit.
+  // See worker/index.ts.
   "name": "navsarplan",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-14",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     // Unknown paths return index.html rather than a 404, so deep links and
     // any future client-side routing resolve to the app.
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    // Without this the SPA fallback would answer /tiles/ with index.html
+    // before the Worker ever ran, and the map would silently get HTML back
+    // where it expected pmtiles bytes.
+    "run_worker_first": ["/tiles/*"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "TILES",
+      "bucket_name": "navsar-tiles"
+    }
+  ],
+  "vars": {
+    // Object key within the bucket. Version this when re-cutting the extract
+    // so a stale edge cache cannot serve half an old archive and half a new
+    // one — the ETag changes with it and the pmtiles reader re-reads.
+    "PMTILES_KEY": "basemap.pmtiles"
   }
 }

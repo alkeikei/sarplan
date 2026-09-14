@@ -1,7 +1,7 @@
 /**
- * The map. Leaflet directly, over OpenStreetMap data. The tile server and its
- * fallback live in ./basemap, so the base layer choice stays open per PRD 12
- * and nothing here assumes a particular provider.
+ * The map. Leaflet directly, over OpenStreetMap data. The tile source lives in
+ * ./basemap, so the base layer choice stays open per PRD 12 and nothing here
+ * assumes a particular provider.
  *
  * The map takes the dominant visual space and every result is drawn on it:
  * drift tracks, datum marks, the error circle, the optimal search area, and
@@ -12,10 +12,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useStore } from '../app/store';
 import { num, position } from '../app/format';
-import { addBaseLayer } from './basemap';
+import { addBaseLayer, setBaseLayerLanguage, type BaseLayer } from './basemap';
 import { setMapCaptureSource, type LayerVisibility } from './mapCapture';
 import type { LatLon } from '../engine';
-import { useT, type HelpId, type TextKey } from '../app/i18n';
+import { useLang, useT, type HelpId, type TextKey } from '../app/i18n';
 import { HelpTip } from './ui/HelpTip';
 
 export const MAP_ELEMENT_ID = 'navsar-map';
@@ -83,6 +83,7 @@ export function MapView({
   const mapRef = useRef<L.Map | null>(null);
   const overlayRef = useRef<L.LayerGroup | null>(null);
   const markerRef = useRef<L.LayerGroup | null>(null);
+  const baseRef = useRef<BaseLayer | null>(null);
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [cursor, setCursor] = useState<LatLon | null>(null);
   /** Which facility's track lines to draw. 'all' is legible only with one facility. */
@@ -93,6 +94,7 @@ export function MapView({
   const stale = useStore((s) => s.stale);
   const patch = useStore((s) => s.patch);
   const t = useT();
+  const lang = useLang();
 
   // The Leaflet layers below are imperative, so the draw effects have to list
   // the translator as a dependency: switching language must redraw the
@@ -100,6 +102,12 @@ export function MapView({
   // Keep the click handler fresh without tearing the map down on every render.
   const placingRef = useRef(placing);
   placingRef.current = placing;
+
+  // The mount-once effect below must not list the language as a dependency —
+  // that would rebuild the whole map on an EN/ID switch. It reads the current
+  // value through this ref, and the effect further down re-labels in place.
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   // --- map lifecycle -------------------------------------------------------
   useEffect(() => {
@@ -113,7 +121,7 @@ export function MapView({
       worldCopyJump: true,
     });
 
-    addBaseLayer(map);
+    baseRef.current = addBaseLayer(map, langRef.current);
 
     L.control.scale({ imperial: false, metric: true }).addTo(map);
 
@@ -141,6 +149,7 @@ export function MapView({
       observer.disconnect();
       map.remove();
       mapRef.current = null;
+      baseRef.current = null;
     };
     // Mount once. Later state changes are handled by the draw effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,6 +160,12 @@ export function MapView({
       containerRef.current.style.cursor = placing ? 'crosshair' : '';
     }
   }, [placing]);
+
+  // Place names are part of the translation, not furniture around it: the map
+  // under an Indonesian panel should not be labelled in English.
+  useEffect(() => {
+    if (baseRef.current) setBaseLayerLanguage(baseRef.current, lang);
+  }, [lang]);
 
   // --- input markers -------------------------------------------------------
   useEffect(() => {

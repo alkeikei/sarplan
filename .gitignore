@@ -27,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Base map archive: gigabytes of tile data, cut by scripts/build-tiles.sh
+tiles/

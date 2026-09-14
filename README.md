@@ -28,22 +28,82 @@ npm run dev
 | `npm run typecheck` | TypeScript, no emit |
 | `npm run build` | Production build to `dist/` |
 | `npm run lint` | oxlint |
+| `npm run tiles` | Cut the base map archive (see below) |
+| `npm run tiles:upload` | Push that archive to R2 |
+| `npm run deploy` | Build and deploy the Worker |
 
 ## Base map
 
-Tiles come from [MapTiler](https://cloud.maptiler.com); the map data underneath
-is still OpenStreetMap. `tile.openstreetmap.org` is volunteer-run
-infrastructure whose usage policy excludes production apps, and a basemap that
-vanishes mid-search is not a failure this tool should be able to have.
+Protomaps vector tiles, from a single `.pmtiles` archive this project hosts
+itself in Cloudflare R2 and serves through its own Worker. No API key, no
+quota, no account to sign up for. The data underneath is still OpenStreetMap;
+only the server changes.
 
-Copy `.env.example` to `.env` and set `VITE_MAPTILER_KEY`. Restrict the key to
-the deploy origin in the MapTiler dashboard: it ships in the client bundle, so
-origin restriction is the control, not secrecy.
+The reasoning is the same one the rest of the app is built on. `tile.openstreet
+map.org` is volunteer-run infrastructure whose usage policy excludes production
+apps, so it may throttle or block without warning. A keyed commercial tile
+service trades that for a monthly quota and a key to keep secret, which an
+open-source tool that anyone can access cannot honestly promise to stay inside.
+A basemap that disappears mid-search is not a failure this tool should be
+capable of having, and self-hosting removes that failure mode rather than
+adding a fallback for it.
 
-With no key set the map falls back to OpenStreetMap, so `npm run dev` works on
-a fresh clone — development is the small-scale use OSM's policy does allow. It
-also falls back if MapTiler rejects the key or goes down, in preference to
-leaving the coordinator without a map.
+There is deliberately no third-party fallback. The archive is served from the
+app's own origin, by the same Worker that serves the app, so the map now has
+exactly the availability the app has: if the tiles are unreachable, the page
+that would have drawn them did not load either. Same-origin also matters to the
+PDF export, which rasterises the map — a cross-origin read would taint the
+canvas.
+
+### Cutting and uploading the archive
+
+```bash
+npm run tiles          # extract the region from the Protomaps planet build
+npm run tiles:upload   # push it to R2
+npm run deploy
+```
+
+`scripts/build-tiles.sh` pulls a regional extract straight out of the remote
+planet archive over range requests, so only the region's bytes are downloaded
+— there is no 100 GB intermediate file. It defaults to the Indonesian search
+and rescue region with sea room either side (`92,-14` to `142,8`), at the
+planet build's full z15. Both are overridable, and `MAXZOOM=13` cuts the file
+substantially while keeping everything that matters at search-planning scale,
+where the useful detail is coastline and navigation rather than building
+footprints:
+
+```bash
+BBOX=110,-9,116,-7 MAXZOOM=13 npm run tiles
+```
+
+It needs the [pmtiles CLI](https://github.com/protomaps/go-pmtiles)
+(`brew install pmtiles`). The archive is gitignored: it is data,
+not source, and it is re-cut rather than versioned.
+
+Re-cut it periodically — the Protomaps planet builds track OpenStreetMap, and
+a coastline is not the sort of thing to leave five years stale.
+
+### Running it locally
+
+`npm run dev` serves `./tiles/basemap.pmtiles` from disk over byte ranges,
+standing in for the Worker. Cut an archive with `npm run tiles`, or skip the
+download entirely and point the dev server at a remote one by copying
+`.env.example` to `.env` and setting `VITE_PMTILES_URL`. The Protomaps daily
+planet build works directly and serves cross-origin range requests:
+
+```
+VITE_PMTILES_URL=https://build.protomaps.com/20260914.pmtiles
+```
+
+Those builds are kept for about a week, so the date needs to be a recent one.
+
+### What it does not have
+
+Bathymetry. The Protomaps basemap is an OpenStreetMap rendering: coastline,
+place names and navigation detail, with open water as flat colour. A depth
+contour under a drifting datum would be worth having and is not there. The
+schema has no room for it either, so it would arrive as a separate overlay —
+GEBCO or EMODnet — rather than as a different basemap.
 
 ## How it is put together
 
@@ -56,6 +116,9 @@ src/
   app/             case state, overrides and provenance, persistence, wind fetch
   components/      map and the step panels
   export/          PDF report
+worker/            the Cloudflare Worker: serves the tile archive from R2,
+                   and hands everything else to the static assets
+scripts/           cutting and uploading that archive
 ```
 
 ### The calculation engine
@@ -171,6 +234,13 @@ translation and not a veneer: the panels, every "?" explanation, the map
 legend and tooltips, the provenance tags, the reference-table labels and the
 exported PDF all switch together.
 
+The base map switches with them. Protomaps carries OpenStreetMap's
+`name:<lang>` tags, so place names are re-labelled in place on an EN / ID
+switch — Indonesian where the data has it, the local name where it does not.
+Place names are part of the translation, not furniture around it: a
+coordinator reading the panels in Indonesian should not be reading the map
+underneath them in English.
+
 `src/app/i18n/` holds it. `en.ts` is the source of truth for the key set and
 `id.ts` is typed `Record<TextKey, string>`, so a string added in English and
 forgotten in Indonesian fails the build rather than shipping a blank label
@@ -262,7 +332,7 @@ survives a refresh or a dropped connection.
 npm test
 ```
 
-134 tests. One per formula in PRD section 14, plus the reference tables, the
+146 tests. One per formula in PRD section 14, plus the reference tables, the
 geodesy, the map geometry, and the override and provenance layer. The
 end-to-end test in `src/engine/__tests__/workedCase.test.ts` runs a complete
 case from drifting start point to track spacing against a hand calculation
@@ -271,16 +341,21 @@ steps.
 
 ## Known limits
 
-- OpenStreetMap raster tiles are the only base layer. PRD 12 leaves the base
-  layer and hosting approach open, pending the responsible agency's approval.
+- No bathymetry under the search area. See "Base map" above.
+- The base map is a single regional extract, so a case outside the cut region
+  gets no tiles. PRD 12 leaves the base layer and hosting approach open,
+  pending the responsible agency's approval.
 - The PDF is rendered with jsPDF's built-in Helvetica, which is WinAnsi
   encoded. Text is checked against that character set in development.
-- The map capture for the PDF uses html2canvas for the tile layer only.
-  Leaflet's vector overlay pane is a single SVG element that html2canvas does
-  not rasterise reliably — in some browsers it comes back empty, which would
-  drop the search area and error circle from the report while leaving the
-  base map looking fine. So `src/components/mapCapture.ts` hides Leaflet's
-  vector, marker and tooltip panes during the capture and redraws every
-  overlay itself, projected through the live map. If the capture fails
-  outright the report is still produced without the map and says so; every
-  calculated position is listed in the text.
+- The map capture for the PDF uses html2canvas for the map furniture only —
+  the attribution and the scale bar. Everything carrying information is
+  composited by hand in `src/components/mapCapture.ts`, because html2canvas
+  silently drops both halves of it: the Protomaps tiles, each drawn into its
+  own canvas, come back blank, and Leaflet's vector overlay pane is a single
+  transform-positioned SVG element that in some browsers rasterises empty —
+  a report showing the base map and the datum marker but missing the search
+  area and the error circle. So the tiles are copied across as bitmaps from
+  the positions the live map has them at, and every overlay is redrawn,
+  projected through the live map. If the capture fails outright the report is
+  still produced without the map and says so; every calculated position is
+  listed in the text.

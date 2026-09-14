@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "deploy": "npm run build && wrangler deploy",
+    "tiles": "./scripts/build-tiles.sh",
+    "tiles:upload": "./scripts/upload-tiles.sh",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
@@ -13,15 +16,19 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@protomaps/basemaps": "^5.7.2",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
+    "pmtiles": "^3.2.1",
+    "protomaps-leaflet": "^5.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260914.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^24.13.3",
