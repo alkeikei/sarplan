@@ -1,0 +1,12 @@
+{
+  // Cloudflare Workers static-asset hosting. The app is a pure client-side
+  // SPA: there is no server code, so this Worker only serves ./dist.
+  "name": "navsarplan",
+  "compatibility_date": "2026-09-14",
+  "assets": {
+    "directory": "./dist",
+    // Unknown paths return index.html rather than a 404, so deep links and
+    // any future client-side routing resolve to the app.
+    "not_found_handling": "single-page-application"
+  }
+}
