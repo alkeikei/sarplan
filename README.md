@@ -377,3 +377,28 @@ steps.
   projected through the live map. If the capture fails outright the report is
   still produced without the map and says so; every calculated position is
   listed in the text.
+
+## Licence
+
+The code is MIT. See `LICENSE`.
+
+The data it carries is not the code's to relicense, and is not all on the same
+footing:
+
+- **Reference tables** (`src/engine/tables/`) are transcribed from the
+  *National Search and Rescue Manual*, 2023 Edition (AMSA / Australian
+  National Search and Rescue Council). Each module carries its citation.
+  Confirm AMSA's terms before redistributing a fork commercially — this
+  project has not obtained a written permission and does not grant one.
+- **LWe** comes from Allen and Plourde (1999), CG-D-08-99, a work of the U.S.
+  federal government and therefore in the public domain.
+- **Base map data** is OpenStreetMap, © OpenStreetMap contributors, under the
+  Open Database License. The `.pmtiles` archive is built from Protomaps'
+  planet builds and is not distributed in this repository; the attribution the
+  ODbL requires is shown on the map and carried into the exported PDF.
+- **Open-Meteo** and **BMKG** are fetched at runtime under their own terms;
+  nothing from either is redistributed here.
+
+**The MIT warranty disclaimer is not a formality here.** This is a planning
+aid. It supports a search coordinator's judgement and is not an authoritative
+determination of where a search object is.
