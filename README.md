@@ -97,6 +97,18 @@ VITE_PMTILES_URL=https://build.protomaps.com/20260914.pmtiles
 
 Those builds are kept for about a week, so the date needs to be a recent one.
 
+### How it is styled
+
+Protomaps' `light` flavour — a plain, legible road map. Someone working a
+search should be reading the map, not a theme.
+
+The one change is the water, taken from the flavour's own saturated cyan down
+to a pale tint of it. Everything the app draws on top — the search rectangle,
+the error circle, the track legs — is cyan or teal, and almost all of it lands
+on open water; against the original those lines were another shade of the same
+colour. The base map gives up saturation it was not using so the plan can have
+it. It also prints legibly, which the earlier dark treatment did not.
+
 ### What it does not have
 
 Bathymetry. The Protomaps basemap is an OpenStreetMap rendering: coastline,

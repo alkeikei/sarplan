@@ -82,8 +82,8 @@ const HIDDEN_PANES = [
   'leaflet-tooltip-pane',
 ];
 
-/** The open-water tone the app uses, and what shows through where no tile has loaded. */
-const BACKGROUND = '#0A2E44';
+/** What shows through where no tile has loaded. The base map's own water tone. */
+import { WATER as BACKGROUND } from './basemap';
 
 export async function captureMapImage(t: Translator = translator('en')): Promise<MapImage> {
   const source = readSource?.();

@@ -56,16 +56,25 @@ const ATTRIBUTION =
   '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 /**
- * The dark flavour, with water and background pulled to the app's own ocean
- * tone so the overlays — drawn in cyan and amber over open water — keep the
- * contrast they were chosen for. Everything else is left as Protomaps ships
- * it rather than restyled by eye.
+ * Water, as drawn under a search plan.
+ *
+ * Protomaps' light flavour is the base: a plain, legible road map, which is
+ * what someone under pressure should be reading rather than anything styled
+ * for effect. The one change is the water, taken from the flavour's own
+ * saturated cyan down to a pale tint of it.
+ *
+ * That is not a taste call. Everything the app draws on top — the search
+ * rectangle, the error circle, the track legs — is cyan or teal, and almost
+ * all of it lands on open water. Against #80deea those lines are another
+ * shade of the same colour; against this they are unmistakable. The base map
+ * gives up saturation it was not using so the plan can have it.
  */
+export const WATER = '#d6ebf2';
+
 const flavor = (): Flavor => ({
-  ...namedFlavor('dark'),
-  background: '#0a2e44',
-  water: '#0a2e44',
-  earth: '#123449',
+  ...namedFlavor('light'),
+  background: WATER,
+  water: WATER,
 });
 
 /**
@@ -124,7 +133,7 @@ export function addBaseLayer(map: L.Map, lang: Lang): BaseLayer {
     url: archive,
     attribution: ATTRIBUTION,
     maxDataZoom: MAX_DATA_ZOOM,
-    backgroundColor: '#0a2e44',
+    backgroundColor: WATER,
     ...rulesFor(lang),
   }) as BaseLayer;
 
