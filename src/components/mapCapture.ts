@@ -1,17 +1,23 @@
 /**
  * Rasterises the map for the PDF report.
  *
- * html2canvas is used for the tile layer only. It does NOT reliably rasterise
- * Leaflet's vector overlay pane, which is a single SVG element positioned by
- * transform: in some browsers it comes back empty, so a report would show the
- * base map and the datum marker but silently lose the search area and the
- * error circle. That is the one thing the report exists to carry, so it is
- * not left to a library quirk.
+ * html2canvas is used for the map furniture only - the attribution and the
+ * scale bar. Everything that carries information is composited here, by hand,
+ * because html2canvas silently drops both halves of it:
  *
- * Instead every overlay is drawn here onto the captured canvas with the 2D
- * API, projected through the live map so it lands exactly where it sits on
- * screen. Leaflet's own vector, marker and tooltip panes are hidden during
- * the capture, so each shape is drawn exactly once, by this code.
+ *   - the base map. Protomaps draws each tile into its own <canvas>, and
+ *     html2canvas comes back with those blank. They are canvases we can read,
+ *     so they are copied straight across at the position the live map has
+ *     them at, which is also faster and exact rather than re-rendered.
+ *   - the overlays. Leaflet's vector pane is a single SVG element positioned
+ *     by transform, and in some browsers that rasterises empty - a report
+ *     showing the base map and the datum marker but silently missing the
+ *     search area and the error circle. That is the one thing the report
+ *     exists to carry, so it is not left to a library quirk.
+ *
+ * So the composition order here is the screen's own: background, tiles,
+ * furniture, overlays. Leaflet's tile, vector, marker and tooltip panes are
+ * all hidden from html2canvas, so nothing is drawn twice.
  */
 
 import type L from 'leaflet';
@@ -68,8 +74,16 @@ import { translator, type Translator } from '../app/i18n';
 
 export class MapCaptureError extends Error {}
 
-/** Panes Leaflet renders itself that this module redraws instead. */
-const HIDDEN_PANES = ['leaflet-overlay-pane', 'leaflet-marker-pane', 'leaflet-tooltip-pane'];
+/** Panes Leaflet renders itself that this module composites instead. */
+const HIDDEN_PANES = [
+  'leaflet-tile-pane',
+  'leaflet-overlay-pane',
+  'leaflet-marker-pane',
+  'leaflet-tooltip-pane',
+];
+
+/** The open-water tone the app uses, and what shows through where no tile has loaded. */
+const BACKGROUND = '#0A2E44';
 
 export async function captureMapImage(t: Translator = translator('en')): Promise<MapImage> {
   const source = readSource?.();
@@ -78,23 +92,36 @@ export async function captureMapImage(t: Translator = translator('en')): Promise
   const { container } = source;
   const { default: html2canvas } = await import('html2canvas');
 
-  const canvas = await html2canvas(container, {
-    useCORS: true,
-    allowTaint: false,
-    backgroundColor: '#0A2E44',
-    scale: Math.min(2, window.devicePixelRatio || 1),
-    logging: false,
-    ignoreElements: (el) => {
-      const cls = el.classList;
-      if (!cls) return false;
-      // The zoom buttons are app furniture, not part of the plan. The
-      // attribution and scale controls stay: the OSM tiles are used under a
-      // licence that requires attribution, including in a printed extract,
-      // and a scale bar is worth having on a search plan.
-      if (cls.contains('leaflet-control-zoom')) return true;
-      return HIDDEN_PANES.some((pane) => cls.contains(pane));
-    },
-  });
+  // The map's own CSS background is the opaque ocean tone, and html2canvas
+  // paints it whatever `backgroundColor` is set to here — which would put a
+  // solid fill straight over the tiles composited below. Lifting it for the
+  // duration is the only way to get a transparent plate back.
+  const ownBackground = container.style.backgroundColor;
+  container.style.backgroundColor = 'transparent';
+
+  let furniture: HTMLCanvasElement;
+  try {
+    furniture = await html2canvas(container, {
+      useCORS: true,
+      allowTaint: false,
+      // Transparent, so what is drawn underneath it here survives.
+      backgroundColor: null,
+      scale: Math.min(2, window.devicePixelRatio || 1),
+      logging: false,
+      ignoreElements: (el) => {
+        const cls = el.classList;
+        if (!cls) return false;
+        // The zoom buttons are app furniture, not part of the plan. The
+        // attribution and scale controls stay: the map data is used under a
+        // licence that requires attribution, including in a printed extract,
+        // and a scale bar is worth having on a search plan.
+        if (cls.contains('leaflet-control-zoom')) return true;
+        return HIDDEN_PANES.some((pane) => cls.contains(pane));
+      },
+    });
+  } finally {
+    container.style.backgroundColor = ownBackground;
+  }
 
   // Compose onto a canvas of our own rather than drawing straight onto the
   // one html2canvas returns. Its context is left carrying the transform it
@@ -103,18 +130,61 @@ export async function captureMapImage(t: Translator = translator('en')): Promise
   // everything drawn afterwards and put the overlays somewhere else entirely.
   // drawImage copies the bitmap, not the transform, so this starts clean.
   const out = document.createElement('canvas');
-  out.width = canvas.width;
-  out.height = canvas.height;
+  out.width = furniture.width;
+  out.height = furniture.height;
   const ctx = out.getContext('2d');
   if (!ctx) throw new MapCaptureError(t('capture.noContext'));
-  ctx.drawImage(canvas, 0, 0);
 
-  // html2canvas renders at a scale factor; the projection below is in CSS
-  // pixels, so everything drawn has to be scaled to match.
+  // html2canvas renders at a scale factor; everything below is measured in
+  // CSS pixels, so it all has to be scaled to match.
   const scale = out.width / container.offsetWidth;
+
+  ctx.fillStyle = BACKGROUND;
+  ctx.fillRect(0, 0, out.width, out.height);
+  drawTiles(ctx, container, scale);
+  ctx.drawImage(furniture, 0, 0);
   drawOverlays(ctx, source, scale);
 
   return { dataUrl: out.toDataURL('image/png'), width: out.width, height: out.height };
+}
+
+/**
+ * Copies the base map across.
+ *
+ * Each tile is a canvas the vector renderer has already drawn, so this is a
+ * bitmap copy rather than a re-render: nothing can come out looking different
+ * from what the coordinator was looking at. Positions are read from the live
+ * layout rather than recomputed, which is what makes it land correctly
+ * through Leaflet's nested pane transforms and mid-zoom scaling.
+ */
+function drawTiles(ctx: CanvasRenderingContext2D, container: HTMLElement, scale: number): void {
+  const base = container.getBoundingClientRect();
+  // In DOM order, so overlapping zoom levels stack the way Leaflet stacks them.
+  const tiles = container.querySelectorAll<HTMLCanvasElement>('.leaflet-tile-pane canvas');
+
+  ctx.save();
+  for (const tile of tiles) {
+    // A tile still loading holds either nothing or the previous zoom's
+    // content, and either would print as a seam.
+    if (!tile.classList.contains('leaflet-tile-loaded')) continue;
+    if (tile.width === 0 || tile.height === 0) continue;
+
+    const rect = tile.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) continue;
+
+    // Mid-fade tiles are half drawn; carry that rather than popping them in.
+    const opacity = Number.parseFloat(getComputedStyle(tile).opacity);
+    ctx.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
+
+    ctx.drawImage(
+      tile,
+      (rect.left - base.left) * scale,
+      (rect.top - base.top) * scale,
+      rect.width * scale,
+      rect.height * scale,
+    );
+  }
+  ctx.restore();
 }
 
 function drawOverlays(ctx: CanvasRenderingContext2D, source: MapCaptureSource, scale: number): void {
