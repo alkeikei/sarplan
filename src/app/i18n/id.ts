@@ -287,6 +287,8 @@ export const id: Record<TextKey, string> = {
   'section.reportNote': 'Catatan yang dibawa setiap laporan',
 
   // --- map ---------------------------------------------------------------
+  'map.offArchive':
+    'Tidak ada peta dasar di sini. Arsip petak hanya mencakup satu wilayah; perhitungan tidak terpengaruh.',
   'map.layers': 'Lapisan',
   'map.driftTrack': 'Jalur hanyut',
   'map.errorCircle': 'Lingkaran galat (E)',

@@ -44,9 +44,6 @@ import type { Lang } from '../app/i18n';
 const PMTILES_URL =
   (import.meta.env.VITE_PMTILES_URL as string | undefined) ?? '/tiles/basemap.pmtiles';
 
-/** Protomaps planet builds carry data to z15; past that the tiles overzoom. */
-const MAX_DATA_ZOOM = 15;
-
 /**
  * Both attributions are required: Protomaps for the tile schema and build,
  * OpenStreetMap for the data.
@@ -80,6 +77,35 @@ const rulesFor = (lang: Lang): { paintRules: ReturnType<typeof paintRules>; labe
 };
 
 export type BaseLayer = ReturnType<typeof leafletLayer> & L.GridLayer;
+
+/**
+ * What the archive actually holds, read from its own header rather than
+ * assumed. A regional extract cut at a different zoom or a different bounding
+ * box is a normal thing to do — `npm run tiles` takes both as arguments — and
+ * the app should follow it rather than have to be edited to match.
+ */
+export interface Coverage {
+  minLon: number;
+  minLat: number;
+  maxLon: number;
+  maxLat: number;
+  /** Deepest zoom with data. Past it the renderer overzooms what it has. */
+  maxZoom: number;
+}
+
+/** A base map on a live Leaflet map. */
+export interface BaseMap {
+  /** Re-labels the map. See the note on place names below. */
+  setLanguage(lang: Lang): void;
+  /** Resolves once the archive header is read, or to null if it cannot be. */
+  readonly coverage: Promise<Coverage | null>;
+  /**
+   * Detaches. Required, not optional tidiness: the layer is attached after an
+   * await, so a map torn down in between would otherwise be given a layer it
+   * no longer has panes for.
+   */
+  remove(): void;
+}
 
 /**
  * The archive, owned here rather than left to the renderer to open from a URL.
@@ -117,37 +143,64 @@ const opened = archive.getHeader().catch((e: unknown) => {
       'archive, or set VITE_PMTILES_URL to a deployed one. In production, ' +
       "check that the archive is in R2 and that the Worker's binding points at it.",
   );
+  return null;
 });
 
-/** Adds the base layer to the map and returns it. */
-export function addBaseLayer(map: L.Map, lang: Lang): BaseLayer {
-  const layer = leafletLayer({
-    url: archive,
-    attribution: ATTRIBUTION,
-    maxDataZoom: MAX_DATA_ZOOM,
-    backgroundColor: WATER,
-    ...rulesFor(lang),
-  }) as BaseLayer;
-
-  layer.addTo(map);
-
-  // The first tiles are requested before the header resolves and come back
-  // empty; once it has, they need asking for again.
-  void opened.then(() => layer.rerenderTiles());
-
-  return layer;
-}
-
 /**
- * Re-labels the base map in the given language.
+ * Adds the base map to a Leaflet map.
  *
- * Place names are part of the translation, not furniture around it: a
- * coordinator reading the panels in Indonesian should not be reading the map
- * underneath them in English. Only the label rules change — the paint rules
- * have no text in them, so the geometry does not re-style.
+ * The layer is created after the archive header arrives rather than before,
+ * because protomaps-leaflet reads `maxDataZoom` once, when the layer is
+ * constructed, and keeps it. Hardcoding 15 worked only for as long as nobody
+ * re-cut the archive at another zoom; read from the header it cannot drift.
+ * The wait is one range request against a file the tiles need anyway.
  */
-export function setBaseLayerLanguage(layer: BaseLayer, lang: Lang): void {
-  layer.labelRules = rulesFor(lang).labelRules;
-  layer.clearLayout();
-  layer.rerenderTiles();
+export function addBaseLayer(map: L.Map, lang: Lang): BaseMap {
+  let layer: BaseLayer | null = null;
+  let current = lang;
+  let attached = true;
+
+  const coverage = opened.then((header) =>
+    header
+      ? {
+          minLon: header.minLon,
+          minLat: header.minLat,
+          maxLon: header.maxLon,
+          maxLat: header.maxLat,
+          maxZoom: header.maxZoom,
+        }
+      : null,
+  );
+
+  void opened.then((header) => {
+    // React mounts, unmounts and remounts in development, and the header can
+    // arrive after the map it was for has been removed.
+    if (!header || !attached) return;
+    layer = leafletLayer({
+      url: archive,
+      attribution: ATTRIBUTION,
+      maxDataZoom: header.maxZoom,
+      backgroundColor: WATER,
+      ...rulesFor(current),
+    }) as BaseLayer;
+    layer.addTo(map);
+  });
+
+  return {
+    coverage,
+    remove(): void {
+      attached = false;
+      if (layer) map.removeLayer(layer);
+      layer = null;
+    },
+    setLanguage(next: Lang): void {
+      current = next;
+      // Only the label rules change; the paint rules carry no text, so the
+      // geometry does not re-style.
+      if (!layer) return;
+      layer.labelRules = rulesFor(next).labelRules;
+      layer.clearLayout();
+      layer.rerenderTiles();
+    },
+  };
 }

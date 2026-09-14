@@ -80,6 +80,11 @@ It needs the [pmtiles CLI](https://github.com/protomaps/go-pmtiles)
 (`brew install pmtiles`). The archive is gitignored: it is data,
 not source, and it is re-cut rather than versioned.
 
+Nothing in the app needs editing to match the archive you cut. Its zoom
+range and its bounding box are read from the archive's own header at startup
+— the renderer is told where to stop overzooming, and the map knows where its
+coverage ends so it can say so instead of showing empty water.
+
 Re-cut it periodically — the Protomaps planet builds track OpenStreetMap, and
 a coastline is not the sort of thing to leave five years stale.
 
@@ -361,8 +366,10 @@ steps.
 
 - No bathymetry under the search area. See "Base map" above.
 - The base map is a single regional extract, so a case outside the cut region
-  gets no tiles. PRD 12 leaves the base layer and hosting approach open,
-  pending the responsible agency's approval.
+  gets no tiles. The map says so rather than going quietly blank, and the
+  calculation is unaffected either way, but there is no map under it. PRD 12
+  leaves the base layer and hosting approach open, pending the responsible
+  agency's approval.
 - The PDF is rendered with jsPDF's built-in Helvetica, which is WinAnsi
   encoded. Text is checked against that character set in development.
 - The map capture for the PDF uses html2canvas for the map furniture only —

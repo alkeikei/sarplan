@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useStore } from '../app/store';
 import { num, position } from '../app/format';
-import { addBaseLayer, setBaseLayerLanguage, type BaseLayer } from './basemap';
+import { addBaseLayer, type BaseMap, type Coverage } from './basemap';
 import { ASSET_COLOURS, OVERLAY_COLOURS } from '../app/colours';
 import { setMapCaptureSource, type LayerVisibility } from './mapCapture';
 import type { LatLon } from '../engine';
@@ -20,6 +20,9 @@ import { useLang, useT, type HelpId, type TextKey } from '../app/i18n';
 import { HelpTip } from './ui/HelpTip';
 
 export const MAP_ELEMENT_ID = 'navsar-map';
+
+/** Leaflet's tile grid, which the archive was cut against. */
+const TILE_SIZE = 256;
 
 export type { LayerVisibility };
 
@@ -84,7 +87,9 @@ export function MapView({
   const mapRef = useRef<L.Map | null>(null);
   const overlayRef = useRef<L.LayerGroup | null>(null);
   const markerRef = useRef<L.LayerGroup | null>(null);
-  const baseRef = useRef<BaseLayer | null>(null);
+  const baseRef = useRef<BaseMap | null>(null);
+  /** True when the middle of the view is past the edge of the tile archive. */
+  const [offArchive, setOffArchive] = useState(false);
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [cursor, setCursor] = useState<LatLon | null>(null);
   /** Which facility's track lines to draw. 'all' is legible only with one facility. */
@@ -156,9 +161,10 @@ export function MapView({
 
     return () => {
       observer.disconnect();
+      baseRef.current?.remove();
+      baseRef.current = null;
       map.remove();
       mapRef.current = null;
-      baseRef.current = null;
     };
     // Mount once. Later state changes are handled by the draw effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,8 +179,57 @@ export function MapView({
   // Place names are part of the translation, not furniture around it: the map
   // under an Indonesian panel should not be labelled in English.
   useEffect(() => {
-    if (baseRef.current) setBaseLayerLanguage(baseRef.current, lang);
+    baseRef.current?.setLanguage(lang);
   }, [lang]);
+
+  /**
+   * Says so when the view has left the archive.
+   *
+   * The base map is a regional extract, and outside it there is nothing to
+   * draw — which on screen is flat water-coloured space, indistinguishable
+   * from a map that failed to load or an app that broke. Everything else here
+   * tells the coordinator where a value came from; the map should say when it
+   * has nothing for where they are looking.
+   *
+   * The test is per tile, not per point, because that is how the archive was
+   * cut: a tile is in it if it overlaps the region at all, so a single z0 tile
+   * carries the whole world and a zoomed-out map is legitimately complete.
+   * Asking whether the tile under the middle of the screen could exist gives
+   * the same answer the renderer will.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    const base = baseRef.current;
+    if (!map || !base) return;
+
+    let live = true;
+    let coverage: Coverage | null = null;
+
+    const check = (): void => {
+      if (!live || !coverage) return;
+      const zoom = Math.floor(map.getZoom());
+      const size = L.point(TILE_SIZE, TILE_SIZE);
+      const origin = map.project(map.getCenter(), zoom).divideBy(TILE_SIZE).floor();
+      const nw = map.unproject(origin.scaleBy(size), zoom);
+      const se = map.unproject(origin.add([1, 1]).scaleBy(size), zoom);
+      setOffArchive(
+        nw.lng > coverage.maxLon ||
+          se.lng < coverage.minLon ||
+          se.lat > coverage.maxLat ||
+          nw.lat < coverage.minLat,
+      );
+    };
+
+    void base.coverage.then((c) => {
+      coverage = c;
+      check();
+    });
+    map.on('moveend zoomend', check);
+    return () => {
+      live = false;
+      map.off('moveend zoomend', check);
+    };
+  }, [caseState.id]);
 
   // --- input markers -------------------------------------------------------
   useEffect(() => {
@@ -391,7 +446,6 @@ export function MapView({
   return (
     <div className="relative h-full w-full">
       <div id={MAP_ELEMENT_ID} ref={containerRef} className="h-full w-full" />
-
       {placing && (
         <div className="pointer-events-none absolute top-3 left-1/2 z-[1000] -translate-x-1/2 rounded-md bg-ocean-900/90 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
           {placing === 'start' ? t('map.placeStart') : t('map.placeLineEnd')}
@@ -400,7 +454,25 @@ export function MapView({
 
       {/* Wide enough for the Indonesian layer names, which run longer than
           the English ones and otherwise wrap onto two lines each. */}
-      <div className="absolute top-3 right-3 z-[1000] w-60 rounded-lg border border-white/10 bg-ocean-900/85 p-2.5 text-white shadow-lg backdrop-blur">
+      {/* The notice rides in the same column as the layer key rather than
+          floating over the map: the key already claims this corner, and on a
+          narrow map pane it claims most of the width. */}
+      {offArchive && (
+        <div
+          role="status"
+          className="pointer-events-none absolute top-3 right-3 z-[1200] w-60 rounded-lg
+                     border border-[var(--color-flag-border)] bg-[var(--color-flag-bg)]
+                     px-2.5 py-2 text-xs text-[var(--color-flag)] shadow-lg"
+        >
+          {t('map.offArchive')}
+        </div>
+      )}
+
+      <div
+        className={`absolute right-3 z-[1000] w-60 rounded-lg border border-white/10 bg-ocean-900/85 p-2.5 text-white shadow-lg backdrop-blur ${
+          offArchive ? 'top-24' : 'top-3'
+        }`}
+      >
         <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-ocean-100 uppercase">
           {t('map.layers')}
         </p>

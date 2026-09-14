@@ -279,6 +279,8 @@ export const en = {
   'section.reportNote': 'Note carried in every report',
 
   // --- map ---------------------------------------------------------------
+  'map.offArchive':
+    'No base map here. The tile archive covers one region; the calculation is unaffected.',
   'map.layers': 'Layers',
   'map.driftTrack': 'Drift track',
   'map.errorCircle': 'Error circle (E)',
