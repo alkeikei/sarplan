@@ -223,8 +223,9 @@ function drawOverlays(ctx: CanvasRenderingContext2D, source: MapCaptureSource, s
         source.trackAssetId === 'all'
           ? geometry.tracksByAsset
           : geometry.tracksByAsset.filter((a) => a.assetId === source.trackAssetId);
-      ctx.globalAlpha = 0.65;
-      ctx.lineWidth = line(1);
+      // Weight and opacity as on screen; see MapView.
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = line(1.75);
       for (const asset of shown) {
         ctx.strokeStyle = source.assetColours.get(asset.assetId) ?? OVERLAY_COLOURS.errorCircle;
         for (const plan of asset.plans) {

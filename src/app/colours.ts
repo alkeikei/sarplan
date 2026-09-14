@@ -42,15 +42,23 @@ export const OVERLAY_COLOURS = {
 /**
  * Track lines, one colour per search facility.
  *
- * Drawn thin and in quantity inside the search rectangle, so each has to stay
- * legible against cyan water at one-pixel widths and stay clear of the box and
- * circle it is drawn inside.
+ * Thin, drawn in quantity, and almost always over open water, so each has to
+ * hold up against cyan at close to a hairline. That rules out the whole
+ * blue-green band — a dark teal reads as sea, not as a helicopter's track —
+ * and it rules out anything pale, because opacity is already working against
+ * these lines.
+ *
+ * So: dark and saturated, spread across hues nothing else on the map is
+ * using. The nearest collision is the deep purple against the indigo error
+ * circle, which is tolerable only because the circle is dashed and an order
+ * of magnitude larger; if a third figure ever wants indigo, this is the one
+ * to move.
  */
 export const ASSET_COLOURS = [
   '#0D47A1',
-  '#00695C',
-  '#33691E',
+  '#B71C1C',
+  '#4A148C',
   '#5D4037',
-  '#37474F',
+  '#263238',
   '#827717',
 ];

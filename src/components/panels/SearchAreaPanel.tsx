@@ -1,3 +1,4 @@
+import { ASSET_COLOURS } from '../../app/colours';
 import { useStore } from '../../app/store';
 import { resolveFs } from '../../app/selectors';
 import { num, percent } from '../../app/format';
@@ -155,7 +156,7 @@ export function SearchAreaPanel() {
             ) : (
               <div className="space-y-2">
                 {run.result.assets.map((a) => {
-                  const colour = caseState.assets.find((x) => x.id === a.id)?.colour ?? '#2DD4BF';
+                  const colour = caseState.assets.find((x) => x.id === a.id)?.colour ?? ASSET_COLOURS[0];
                   const plan = run.result.geometry.tracksByAsset.find((t) => t.assetId === a.id)
                     ?.plans[0];
                   return (

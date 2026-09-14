@@ -9,6 +9,7 @@
 
 import { openDB, type IDBPDatabase } from 'idb';
 import type { CaseState } from './types';
+import { ASSET_COLOURS } from './colours';
 
 // Kept at the pre-rename name on purpose: the app was published as SARPlan,
 // and renaming the database would orphan every case already saved in a
@@ -47,14 +48,39 @@ export async function saveCase(state: CaseState): Promise<void> {
   await database.put(META, state.id, LAST_CASE_KEY);
 }
 
+/**
+ * Re-reads facility colours from the current palette.
+ *
+ * A facility's colour is assigned by position when it is created and is not
+ * something the user picks, so a stored one is a copy of whatever palette was
+ * current the day the case was saved. Leaving it alone meant a change to the
+ * palette reached new cases only, and every case already on disk kept drawing
+ * its track lines in the old colours — which, when the palette changed
+ * precisely because those colours were illegible on the map, is the one set of
+ * cases that most needed fixing.
+ *
+ * Nothing is written back. The case on disk keeps whatever it has, and takes
+ * the current palette again the next time it is opened.
+ */
+function withCurrentColours(state: CaseState | undefined): CaseState | undefined {
+  if (!state) return state;
+  return {
+    ...state,
+    assets: state.assets.map((asset, index) => ({
+      ...asset,
+      colour: ASSET_COLOURS[index % ASSET_COLOURS.length],
+    })),
+  };
+}
+
 export async function loadCase(id: string): Promise<CaseState | undefined> {
-  return (await db()).get(CASES, id);
+  return withCurrentColours(await (await db()).get(CASES, id));
 }
 
 export async function loadLastCase(): Promise<CaseState | undefined> {
   const database = await db();
   const id = (await database.get(META, LAST_CASE_KEY)) as string | undefined;
-  return id ? database.get(CASES, id) : undefined;
+  return id ? withCurrentColours(await database.get(CASES, id)) : undefined;
 }
 
 export async function listCases(): Promise<CaseSummary[]> {

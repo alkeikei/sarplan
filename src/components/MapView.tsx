@@ -301,8 +301,11 @@ export function MapView({
             group.addLayer(
               L.polyline([toLatLng(leg.from), toLatLng(leg.to)], {
                 color: colour,
-                weight: 1,
-                opacity: 0.65 * alpha,
+                // A hairline at two-thirds opacity was legible against the old
+                // dark basemap, where a pale line glowed. Over cyan water it
+                // is barely there, and these are the legs someone has to fly.
+                weight: 1.75,
+                opacity: 0.9 * alpha,
               }).bindTooltip(
                 t(stride > 1 ? 'map.legsTipStride' : 'map.legsTip', {
                   name: asset.assetName,
