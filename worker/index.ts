@@ -107,13 +107,17 @@ async function serveArchive(request: Request, env: Env, ctx: ExecutionContext): 
   // R2Range is a union — an offset, a length, either on its own, or a suffix
   // ("the last n bytes"). Content-Range needs both ends resolved, so settle
   // them against the object size here.
-  const { offset, length } =
-    'suffix' in served
-      ? { offset: object.size - served.suffix, length: served.suffix }
-      : {
-          offset: served.offset ?? 0,
-          length: served.length ?? object.size - (served.offset ?? 0),
-        };
+  //
+  // Read through one loose shape rather than narrowing on `in`: R2 hands back
+  // an object carrying all three keys, the unused ones set to undefined, so
+  // `'suffix' in range` is true even for an ordinary offset range and the
+  // arithmetic that followed it produced `bytes NaN-NaN/<size>`. The body was
+  // right and only the header was wrong, which is the kind of thing a tolerant
+  // client hides until a stricter one or a cache in between refuses it.
+  const parts = served as { offset?: number; length?: number; suffix?: number };
+  const suffix = typeof parts.suffix === 'number' ? parts.suffix : undefined;
+  const offset = suffix === undefined ? (parts.offset ?? 0) : object.size - suffix;
+  const length = suffix ?? parts.length ?? object.size - offset;
 
   if (length > MAX_RANGE_BYTES) {
     return new Response('Range too large', { status: 416 });
