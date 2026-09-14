@@ -56,26 +56,18 @@ const ATTRIBUTION =
   '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 /**
- * Water, as drawn under a search plan.
- *
- * Protomaps' light flavour is the base: a plain, legible road map, which is
- * what someone under pressure should be reading rather than anything styled
- * for effect. The one change is the water, taken from the flavour's own
- * saturated cyan down to a pale tint of it.
- *
- * That is not a taste call. Everything the app draws on top — the search
- * rectangle, the error circle, the track legs — is cyan or teal, and almost
- * all of it lands on open water. Against #80deea those lines are another
- * shade of the same colour; against this they are unmistakable. The base map
- * gives up saturation it was not using so the plan can have it.
+ * Protomaps' light flavour, unmodified: a plain, legible road map. Someone
+ * working a search should be reading the map, not a theme. What is drawn on
+ * top of it is coloured to stand off it — see `src/app/colours.ts`.
  */
-export const WATER = '#d6ebf2';
+const flavor = (): Flavor => namedFlavor('light');
 
-const flavor = (): Flavor => ({
-  ...namedFlavor('light'),
-  background: WATER,
-  water: WATER,
-});
+/**
+ * The flavour's own water tone, which is what most of a maritime search sits
+ * on. Exported so the PDF capture can fill with it where no tile has loaded
+ * rather than leaving a hole in a different colour.
+ */
+export const WATER = flavor().water;
 
 /**
  * Protomaps carries OSM's `name:<lang>` tags, so labels follow the app's

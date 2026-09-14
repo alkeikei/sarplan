@@ -1,15 +1,6 @@
 import { DEFAULT_CURRENT_ERROR_KT } from '../engine';
 import type { AssetState, CaseState, CurrentState } from './types';
-
-/** Overlay colours for search facility track lines, one per asset. */
-export const ASSET_COLOURS = [
-  '#2DD4BF',
-  '#38BDF8',
-  '#F472B6',
-  '#FBBF24',
-  '#A78BFA',
-  '#4ADE80',
-];
+import { ASSET_COLOURS } from './colours';
 
 export const newId = (): string =>
   globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;

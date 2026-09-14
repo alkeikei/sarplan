@@ -99,15 +99,21 @@ Those builds are kept for about a week, so the date needs to be a recent one.
 
 ### How it is styled
 
-Protomaps' `light` flavour — a plain, legible road map. Someone working a
-search should be reading the map, not a theme.
+Protomaps' `light` flavour, unmodified — a plain, legible road map. Someone
+working a search should be reading the map, not a theme, and it has to print.
 
-The one change is the water, taken from the flavour's own saturated cyan down
-to a pale tint of it. Everything the app draws on top — the search rectangle,
-the error circle, the track legs — is cyan or teal, and almost all of it lands
-on open water; against the original those lines were another shade of the same
-colour. The base map gives up saturation it was not using so the plan can have
-it. It also prints legibly, which the earlier dark treatment did not.
+What changes is everything drawn on top of it. The overlay palette lives in
+`src/app/colours.ts`, one module because these colours are drawn twice — once
+by Leaflet onto the screen, once by hand onto the PDF capture — and a report
+that does not match the screen it was exported from is worse than no report.
+
+They are picked against this base map rather than in the abstract: cyan water
+under most of a maritime search, warm off-white land under the rest, white
+roads, pale green parks. So the overlays are dark and saturated, in three
+families the map can be read by before it is studied — orange for what the
+coordinator entered, a black datum between a pink-red box and an indigo circle
+for the answer, and a separate set for the facilities' track lines. Nothing is
+green or cyan: green is the base map's parks and cyan is its water.
 
 ### What it does not have
 

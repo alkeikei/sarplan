@@ -13,6 +13,7 @@ import L from 'leaflet';
 import { useStore } from '../app/store';
 import { num, position } from '../app/format';
 import { addBaseLayer, setBaseLayerLanguage, type BaseLayer } from './basemap';
+import { ASSET_COLOURS, OVERLAY_COLOURS } from '../app/colours';
 import { setMapCaptureSource, type LayerVisibility } from './mapCapture';
 import type { LatLon } from '../engine';
 import { useLang, useT, type HelpId, type TextKey } from '../app/i18n';
@@ -30,10 +31,10 @@ const LAYER_KEY: {
   dashed: boolean;
   help: HelpId;
 }[] = [
-  { key: 'driftTrack', label: 'map.driftTrack', colour: '#FBBF24', dashed: true, help: 'driftDistance' },
-  { key: 'errorCircle', label: 'map.errorCircle', colour: '#2DD4BF', dashed: true, help: 'e' },
-  { key: 'searchArea', label: 'map.searchArea', colour: '#38BDF8', dashed: false, help: 'ao' },
-  { key: 'trackLines', label: 'map.trackLines', colour: '#2DD4BF', dashed: false, help: 'so' },
+  { key: 'driftTrack', label: 'map.driftTrack', colour: OVERLAY_COLOURS.driftTrack, dashed: true, help: 'driftDistance' },
+  { key: 'errorCircle', label: 'map.errorCircle', colour: OVERLAY_COLOURS.errorCircle, dashed: true, help: 'e' },
+  { key: 'searchArea', label: 'map.searchArea', colour: OVERLAY_COLOURS.searchArea, dashed: false, help: 'ao' },
+  { key: 'trackLines', label: 'map.trackLines', colour: ASSET_COLOURS[0], dashed: false, help: 'so' },
 ];
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -174,7 +175,7 @@ export function MapView({
     group.clearLayers();
 
     const start = L.marker(toLatLng(caseState.startPoint), {
-      icon: pinIcon('#FBBF24', t('map.startPointTip')),
+      icon: pinIcon(OVERLAY_COLOURS.startPoint, t('map.startPointTip')),
       draggable: true,
       zIndexOffset: 500,
     })
@@ -187,7 +188,7 @@ export function MapView({
 
     if (caseState.lineEndPoint) {
       const end = L.marker(toLatLng(caseState.lineEndPoint), {
-        icon: pinIcon('#FDE68A', t('map.lineEndTip')),
+        icon: pinIcon(OVERLAY_COLOURS.lineEndPoint, t('map.lineEndTip')),
         draggable: true,
         zIndexOffset: 500,
       })
@@ -199,7 +200,7 @@ export function MapView({
       group.addLayer(end);
       group.addLayer(
         L.polyline([toLatLng(caseState.startPoint), toLatLng(caseState.lineEndPoint)], {
-          color: '#FBBF24',
+          color: OVERLAY_COLOURS.driftTrack,
           weight: 2,
           dashArray: '6 4',
         }),
@@ -228,7 +229,7 @@ export function MapView({
       for (const track of geometry.driftTrack) {
         group.addLayer(
           L.polyline(track.points.map(toLatLng), {
-            color: '#FBBF24',
+            color: OVERLAY_COLOURS.driftTrack,
             weight: 2,
             opacity: 0.85 * alpha,
             dashArray: '4 5',
@@ -247,10 +248,10 @@ export function MapView({
       for (const rect of geometry.searchRectangles) {
         group.addLayer(
           L.polygon(rect.corners.map(toLatLng), {
-            color: '#38BDF8',
+            color: OVERLAY_COLOURS.searchArea,
             weight: 2.5,
             opacity: alpha,
-            fillColor: '#38BDF8',
+            fillColor: OVERLAY_COLOURS.searchArea,
             fillOpacity: 0.1 * alpha,
           }).bindTooltip(
             t('map.rectTip', {
@@ -268,7 +269,7 @@ export function MapView({
       for (const circle of geometry.errorCircles) {
         group.addLayer(
           L.polygon(circle.polygon.map(toLatLng), {
-            color: '#2DD4BF',
+            color: OVERLAY_COLOURS.errorCircle,
             weight: 1.5,
             opacity: 0.9 * alpha,
             dashArray: '5 5',
@@ -290,7 +291,7 @@ export function MapView({
           ? geometry.tracksByAsset
           : geometry.tracksByAsset.filter((a) => a.assetId === trackAssetId);
       for (const asset of shown) {
-        const colour = assetColours.get(asset.assetId) ?? '#2DD4BF';
+        const colour = assetColours.get(asset.assetId) ?? ASSET_COLOURS[0];
         for (const plan of asset.plans) {
           // A very tight spacing can produce hundreds of legs, which is real
           // but unreadable; draw a representative subset and say so.
@@ -327,7 +328,7 @@ export function MapView({
           ];
     for (const mark of marks) {
       group.addLayer(
-        L.marker(toLatLng(mark.point), { icon: crossIcon('#0e9384'), zIndexOffset: 400 }).bindTooltip(
+        L.marker(toLatLng(mark.point), { icon: crossIcon(OVERLAY_COLOURS.datum), zIndexOffset: 400 }).bindTooltip(
           `${mark.label}<br>${position(mark.point)}`,
           { direction: 'top', offset: [0, -12] },
         ),
@@ -399,7 +400,9 @@ export function MapView({
             <label key={key} className="flex cursor-pointer items-center gap-2 text-xs">
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 accent-[#2DD4BF]"
+                /* Tailwind needs a literal here, so this one cannot read
+                   ASSET_COLOURS[0] and has to be kept in step with it. */
+                className="h-3.5 w-3.5 accent-[#0D47A1]"
                 checked={layers[key]}
                 onChange={(e) => setLayers((l) => ({ ...l, [key]: e.target.checked }))}
               />
@@ -431,12 +434,13 @@ export function MapView({
 
         <p className="mt-2 flex items-center gap-2 border-t border-white/10 pt-2 text-xs">
           <svg width="12" height="12" viewBox="0 0 22 22" aria-hidden className="shrink-0">
-            <line x1="11" y1="1" x2="11" y2="21" stroke="#2DD4BF" strokeWidth="3" />
-            <line x1="1" y1="11" x2="21" y2="11" stroke="#2DD4BF" strokeWidth="3" />
+            <line x1="11" y1="1" x2="11" y2="21" stroke={OVERLAY_COLOURS.datum} strokeWidth="3" />
+            <line x1="1" y1="11" x2="21" y2="11" stroke={OVERLAY_COLOURS.datum} strokeWidth="3" />
           </svg>
           {t('map.datum')}
           <HelpTip id="datum" tone="dark" />
-          <span className="ml-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#FBBF24]" aria-hidden />
+          {/* Literal for the same Tailwind reason: OVERLAY_COLOURS.startPoint. */}
+          <span className="ml-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#EF6C00]" aria-hidden />
           {t('map.startPoint')}
           <HelpTip id="startPoint" tone="dark" />
         </p>

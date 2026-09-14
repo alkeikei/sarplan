@@ -49,15 +49,8 @@ export interface MapImage {
   height: number;
 }
 
-/** Overlay colours, kept in step with MapView so the report matches the screen. */
-export const OVERLAY_COLOURS = {
-  driftTrack: '#FBBF24',
-  searchArea: '#38BDF8',
-  errorCircle: '#2DD4BF',
-  datum: '#0E9384',
-  startPoint: '#FBBF24',
-  lineEndPoint: '#FDE68A',
-} as const;
+export { OVERLAY_COLOURS } from '../app/colours';
+import { OVERLAY_COLOURS } from '../app/colours';
 
 let readSource: (() => MapCaptureSource | null) | null = null;
 
