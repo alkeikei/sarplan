@@ -1,5 +1,5 @@
 /**
- * Shared types for the ISPM calculation engine.
+ * Shared types for the search planning calculation engine.
  *
  * This module, and everything else under /src/engine, is framework free: no
  * React, no DOM, no network. Everything is pure functions over plain data so

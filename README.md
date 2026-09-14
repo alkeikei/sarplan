@@ -1,6 +1,6 @@
-# SARPlan
+# NavSAR
 
-A browser tool that runs the IAMSAR ISPM search planning chain: case facts and
+A browser tool that runs the IAMSAR search planning chain: case facts and
 drift inputs in, datum, total probable error, optimal search area and track
 spacing out, drawn on a map and exportable as a PDF search plan.
 
@@ -49,7 +49,7 @@ leaving the coordinator without a map.
 
 ```
 src/
-  engine/          the ISPM calculation chain. Framework free: no React, no
+  engine/          the calculation chain. Framework free: no React, no
                    DOM, no network, no clock. Pure functions over plain data.
     tables/        the reference tables as typed data modules
     __tests__/     one test per formula, plus a full worked case

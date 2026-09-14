@@ -1,5 +1,6 @@
 /**
- * The full ISPM chain, run end to end in the order PRD section 14 sets out.
+ * The full IAMSAR search planning chain, run end to end in the order PRD
+ * section 14 sets out.
  *
  *   1. drift          leeway + total water current -> datum(s), DD
  *   2. error          TWCe -> Dve -> De -> E -> SR -> datum type

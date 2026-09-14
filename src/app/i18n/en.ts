@@ -11,7 +11,7 @@
 
 export const en = {
   // --- shell -------------------------------------------------------------
-  'app.tagline': 'Optimal search planning · IAMSAR ISPM',
+  'app.tagline': 'Optimal search planning · IAMSAR',
   'app.language': 'Language',
   'app.saving': 'Saving…',
   'app.savedAt': 'Saved {time}',
@@ -392,7 +392,7 @@ export const en = {
   'capture.noContext': 'Could not get a drawing context for the map capture.',
 
   // --- report ------------------------------------------------------------
-  'report.subtitle': 'SARPlan search plan  ·  calculated {calc}  ·  report generated {gen}',
+  'report.subtitle': 'NavSAR search plan  ·  calculated {calc}  ·  report generated {gen}',
   'report.untitled': 'Untitled case',
   'report.fileCase': 'case',
   'report.h.summary': 'Result summary',

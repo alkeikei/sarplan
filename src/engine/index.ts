@@ -1,9 +1,9 @@
 /**
- * SARPlan calculation engine.
+ * NavSAR calculation engine.
  *
  * Standalone and framework free: no React, no DOM, no network calls. The UI
- * imports from here and nothing here imports from the UI, so the whole ISPM
- * chain can be unit tested against worked examples on its own.
+ * imports from here and nothing here imports from the UI, so the whole
+ * planning chain can be unit tested against worked examples on its own.
  *
  * Canonical units throughout: knots, nautical miles, hours, square nautical
  * miles, degrees true. See ./units.

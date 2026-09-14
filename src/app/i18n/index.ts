@@ -35,7 +35,9 @@ export interface Translator {
   data: (english: string) => string;
 }
 
-const STORAGE_KEY = 'sarplan.lang';
+const STORAGE_KEY = 'navsar.lang';
+/** The pre-rename key. Read once so a returning user keeps their language. */
+const LEGACY_STORAGE_KEY = 'sarplan.lang';
 
 function interpolate(template: string, params?: Params): string {
   if (!params) return template;
@@ -74,8 +76,12 @@ export const translator = (lang: Lang): Translator => TRANSLATORS[lang];
 
 function read(): Lang {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'en' || stored === 'id') return stored;
+    const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (stored === 'en' || stored === 'id') {
+      localStorage.setItem(STORAGE_KEY, stored);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return stored;
+    }
   } catch {
     // Private browsing or blocked storage: fall through to the default.
   }

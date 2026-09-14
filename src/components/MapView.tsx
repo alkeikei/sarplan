@@ -18,7 +18,7 @@ import type { LatLon } from '../engine';
 import { useT, type HelpId, type TextKey } from '../app/i18n';
 import { HelpTip } from './ui/HelpTip';
 
-export const MAP_ELEMENT_ID = 'sarplan-map';
+export const MAP_ELEMENT_ID = 'navsar-map';
 
 export type { LayerVisibility };
 

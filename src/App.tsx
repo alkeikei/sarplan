@@ -68,7 +68,7 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <Compass />
           <div>
-            <h1 className="text-sm font-semibold tracking-wide text-white">SARPlan</h1>
+            <h1 className="text-sm font-semibold tracking-wide text-white">NavSAR</h1>
             <p className="text-[10px] leading-tight text-ocean-100">{t('app.tagline')}</p>
           </div>
         </div>

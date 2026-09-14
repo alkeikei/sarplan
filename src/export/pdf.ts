@@ -259,7 +259,7 @@ class Report {
 
   save(): void {
     const safe = this.caseName.replace(/[^a-z0-9-_ ]/gi, '').trim() || this.t('report.fileCase');
-    this.doc.save(`SARPlan ${safe} ${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '')}.pdf`);
+    this.doc.save(`NavSAR ${safe} ${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '')}.pdf`);
   }
 }
 

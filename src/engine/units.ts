@@ -1,5 +1,5 @@
 /**
- * Unit conversions for the ISPM engine.
+ * Unit conversions for the calculation engine.
  *
  * Canonical internal units, used by every function in /src/engine:
  *   speed     knots (kt)

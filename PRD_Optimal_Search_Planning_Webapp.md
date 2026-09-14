@@ -1,16 +1,23 @@
 # Product Requirements Document
-## Optimal Search Planning Web App (working title: SARPlan)
+## Optimal Search Planning Web App (NavSAR)
 
 Version: 0.1 draft
 Status: For review
+
+> **Correction, 2026-09-14.** Earlier drafts of this document called the
+> method "IAMSAR ISPM". That acronym has no basis in IAMSAR, in the AMSA
+> NATSAR manual, or in any other source consulted, and appears to have been
+> introduced here in error; it has been removed from the codebase. The method
+> is simply IAMSAR search planning. The product was also renamed from SARPlan
+> to NavSAR.
 
 ---
 
 ## 1. Purpose
 
-Search and rescue teams currently calculate optimal search areas by hand, using the IAMSAR ISPM method. This means manually pulling wind and current data, computing drift vectors, computing probable error, and looking up correction factors in printed tables. It is slow and error prone under time pressure.
+Search and rescue teams currently calculate optimal search areas by hand, using the IAMSAR search planning method. This means manually pulling wind and current data, computing drift vectors, computing probable error, and looking up correction factors in printed tables. It is slow and error prone under time pressure.
 
-SARPlan automates this calculation chain. A user enters a small set of case facts. The app pulls weather and current data automatically where possible, lets the user pin locations on a map, runs the full ISPM calculation, and renders the predicted search area as a map overlay.
+NavSAR automates this calculation chain. A user enters a small set of case facts. The app pulls weather and current data automatically where possible, lets the user pin locations on a map, runs the full calculation, and renders the predicted search area as a map overlay.
 
 ## 2. Goals
 
@@ -22,8 +29,8 @@ SARPlan automates this calculation chain. A user enters a small set of case fact
 
 ## 3. Non-Goals
 
-- SARPlan does not dispatch assets or manage live communications with search units.
-- SARPlan does not replace the on-scene coordinator's judgment. It produces a recommendation, not a directive.
+- NavSAR does not dispatch assets or manage live communications with search units.
+- NavSAR does not replace the on-scene coordinator's judgment. It produces a recommendation, not a directive.
 - V1 does not include mobile native apps. It targets a browser, usable on a tablet in an operations room.
 - V1 does not include multi-agency case sharing or permissions systems. That is a later phase.
 
@@ -77,7 +84,7 @@ SARPlan automates this calculation chain. A user enters a small set of case fact
 
 ### 6.4 Drift and Datum Calculation Engine
 
-Implements, per the IAMSAR ISPM method:
+Implements, per the IAMSAR search planning method:
 - Drift vector synthesis from leeway, tidal current, sea current, wind current, and other water current.
 - Datum position and, where relevant, leeway divergence distance (DD).
 - Drift velocity error, from average surface wind error, total water current error, and leeway error.
@@ -129,7 +136,7 @@ Implements, per the IAMSAR ISPM method:
 ## 8. System Architecture (high level)
 
 - Frontend: map-based web UI (for example, MapLibre or Leaflet) plus a form-based input panel and a results panel.
-- Backend calculation service: stateless service implementing the ISPM formulas, takes case inputs and returns all derived values. Keeping this isolated makes it independently testable against the worked exercises in the IAMSAR manual.
+- Backend calculation service: stateless service implementing the planning formulas, takes case inputs and returns all derived values. Keeping this isolated makes it independently testable against the worked exercises in the IAMSAR manual.
 - Data ingestion service: scheduled and on-demand calls to external weather and ocean current sources, normalized into a common format before reaching the calculation service.
 - Database: stores cases, inputs, environment snapshots, and results for reproducibility and audit.
 - Export service: renders the case into a PDF report.
@@ -169,7 +176,7 @@ Final choice depends on the operating region and any existing data agreements th
 
 Phase 1, MVP:
 - Manual and map-based input for a single search, single datum type at a time.
-- Full ISPM calculation engine (drift, error, effort, area, coverage, track spacing).
+- Full calculation engine (drift, error, effort, area, coverage, track spacing).
 - Map overlay of datum, error circle, and optimal search area.
 - One external weather and current data source, with manual override.
 - Exportable PDF report.

@@ -6,11 +6,11 @@
  *
  * Terminology follows Indonesian SAR usage rather than literal translation:
  * a search facility is an "unsur SAR", a probable error is a "galat", and the
- * ISPM symbols (E, Ro, Ao, Co, So, DD, SR, W0, fw, fv, ff, Zta, POC, POD, POS)
- * are left alone because they are international notation read off the same
- * manual in either language. Loanwords already standard in the field - datum,
- * leeway, sweep width, knot - are kept and glossed in the help text rather
- * than replaced with coinages a crew would not recognise.
+ * notation symbols (E, Ro, Ao, Co, So, DD, SR, W0, fw, fv, ff, Zta, POC, POD,
+ * POS) are left alone because they are international notation read off the
+ * same manual in either language. Loanwords already standard in the field -
+ * datum, leeway, sweep width, knot - are kept and glossed in the help text
+ * rather than replaced with coinages a crew would not recognise.
  *
  * Table references (Table D-6:1, Table 3-2) stay in English: they are
  * citations into an English source manual, and a translated table name cannot
@@ -21,7 +21,7 @@ import type { TextKey } from './en';
 
 export const id: Record<TextKey, string> = {
   // --- shell -------------------------------------------------------------
-  'app.tagline': 'Perencanaan pencarian optimal · IAMSAR ISPM',
+  'app.tagline': 'Perencanaan pencarian optimal · IAMSAR',
   'app.language': 'Bahasa',
   'app.saving': 'Menyimpan…',
   'app.savedAt': 'Tersimpan {time}',
@@ -399,7 +399,7 @@ export const id: Record<TextKey, string> = {
   'capture.noContext': 'Tidak dapat memperoleh konteks gambar untuk pengambilan peta.',
 
   // --- report ------------------------------------------------------------
-  'report.subtitle': 'Rencana pencarian SARPlan  ·  dihitung {calc}  ·  laporan dibuat {gen}',
+  'report.subtitle': 'Rencana pencarian NavSAR  ·  dihitung {calc}  ·  laporan dibuat {gen}',
   'report.untitled': 'Kasus tanpa nama',
   'report.fileCase': 'kasus',
   'report.h.summary': 'Ringkasan hasil',

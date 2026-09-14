@@ -12,10 +12,10 @@
  *    English and not to Indonesian fails the build rather than shipping a
  *    blank label into an operations room.
  *
- *  - Standard ISPM notation is never translated. E, Ro, Ao, Co, So, DD, SR,
- *    W0, fw, fv, ff, Zta, POC, POD, POS are international symbols and an
- *    Indonesian coordinator reads them from the same manual an English one
- *    does. The prose around them is what changes.
+ *  - Standard search planning notation is never translated. E, Ro, Ao, Co,
+ *    So, DD, SR, W0, fw, fv, ff, Zta, POC, POD, POS are international symbols
+ *    and an Indonesian coordinator reads them from the same manual an English
+ *    one does. The prose around them is what changes.
  *
  *  - Labels quoted from the source tables keep their English original
  *    alongside the translation where the English is the citation (table

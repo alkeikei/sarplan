@@ -10,6 +10,9 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import type { CaseState } from './types';
 
+// Kept at the pre-rename name on purpose: the app was published as SARPlan,
+// and renaming the database would orphan every case already saved in a
+// coordinator's browser.
 const DB_NAME = 'sarplan';
 const DB_VERSION = 1;
 const CASES = 'cases';
