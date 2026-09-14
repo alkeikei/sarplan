@@ -126,14 +126,22 @@ export function MapView({
 
     L.control.scale({ imperial: false, metric: true }).addTo(map);
 
-    map.on('mousemove', (e: L.LeafletMouseEvent) =>
-      setCursor({ lat: e.latlng.lat, lon: e.latlng.lng }),
-    );
+    // `wrap()` on every position read off the map, without exception.
+    // worldCopyJump repeats the world either side of the real one, and a
+    // click or a hover on one of those copies reports its longitude
+    // unwrapped: 452 E rather than 92 E. Left alone that is a coordinate
+    // that does not exist, printed on a search plan and calculated from.
+    const at = (e: L.LeafletMouseEvent): LatLon => {
+      const p = e.latlng.wrap();
+      return { lat: p.lat, lon: p.lng };
+    };
+
+    map.on('mousemove', (e: L.LeafletMouseEvent) => setCursor(at(e)));
     map.on('mouseout', () => setCursor(null));
     map.on('click', (e: L.LeafletMouseEvent) => {
       const mode = placingRef.current;
       if (!mode) return;
-      const point = { lat: e.latlng.lat, lon: e.latlng.lng };
+      const point = at(e);
       if (mode === 'start') patch('Start point (map)', (d) => void (d.startPoint = point));
       else patch('Line end point (map)', (d) => void (d.lineEndPoint = point));
       onPlacingChange(null);
